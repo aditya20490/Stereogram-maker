@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b0f1a">
 <title>Stereo 3D</title>
 <style>
-:root{--bg:#0b0f1a;--card:#151b2b;--line:#252d42;--acc:#4f8cff;--acc2:#8a5cff;--txt:#eef1f8;--mut:#8b94ab}
+:root{--bg:#0b0f1a;--card:#151b2b;--line:#252d42;--acc:#4f8cff;--acc2:#8a5cff;--txt:#eef1f8;--mut:#8b94ab;--ok:#22c55e;--bad:#ef4444}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
 #app{display:flex;flex-direction:column;height:100dvh}
@@ -22,6 +22,8 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 .tab.on{color:var(--acc)}
 .btn{border:0;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2))}
 .btn.alt{background:var(--card);border:1px solid var(--line);font-weight:500}
+.btn.ok{background:var(--ok)}
+.btn.bad{background:var(--bad)}
 /* camera */
 #cam,#ghost{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #ghost{opacity:.4;display:none;pointer-events:none}
@@ -41,25 +43,36 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 #pstatus{color:#9cc2ff;font-size:14px;min-height:20px}
 #pbar{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
 #pfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
-/* viewer */
-#viewer{position:fixed;inset:0;background:#000;display:none;z-index:50}
-#out{width:100%;height:100%;object-fit:contain;display:block}
-#vbar{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d);display:flex;flex-direction:column;gap:8px;align-items:center}
-#vbar.hide{display:none}
+/* library */
+#v-lib{flex-direction:column;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+#libHead{font-size:13px;color:var(--mut);margin:0 2px 10px}
+#libGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.thumb{width:100%;border-radius:12px;border:1px solid var(--line);background-color:var(--card);background-repeat:no-repeat;background-size:200% 100%;background-position:left center;position:relative;overflow:hidden}
+.thumb i{position:absolute;right:6px;bottom:6px;font-style:normal;font-size:11px;background:#000a;border-radius:8px;padding:2px 7px}
+#libEmpty{display:none;text-align:center;color:var(--mut);margin:auto;line-height:1.5;padding:30px}
+/* overlays */
+.full{position:fixed;inset:0;background:#000;display:none;z-index:50}
+.full canvas,.full img.big{width:100%;height:100%;object-fit:contain;display:block}
+.full.hide .ui{display:none}
+.top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#000c,transparent)}
+.pill{border:0;border-radius:22px;padding:10px 18px;font-size:15px;font-weight:600;color:#fff;background:#ffffff26;backdrop-filter:blur(6px)}
+.xbtn{width:40px;height:40px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:20px}
+.bot{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d);display:flex;flex-direction:column;gap:8px;align-items:center}
 .seg{display:flex;border:1px solid #fff4;border-radius:12px;overflow:hidden}
 .seg button{background:#0009;color:#fff;border:0;padding:9px 14px;font-size:14px}
 .seg button.on{background:var(--acc)}
 #strRow{width:90%;max-width:420px;font-size:13px;color:#cfd6e8;text-align:center}
 #strRow input{width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.row .btn{padding:10px 18px;font-size:15px}
-#vclose{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;width:40px;height:40px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:20px}
+.row .btn{padding:11px 20px;font-size:15px;min-width:130px}
 .tip{font-size:12px;color:#aab3c9;text-align:center}
 /* help */
 #help{position:fixed;inset:0;background:#000c;display:none;z-index:60;align-items:flex-end}
 #help .sheet{background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto;user-select:text}
 #help h3{margin:0 0 10px}
 #help ol{margin:0 0 14px;padding-left:20px;color:#cfd6e8;line-height:1.6;font-size:15px}
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000d;color:#fff;border:1px solid #fff3;border-radius:20px;padding:9px 18px;font-size:14px;z-index:99;display:none}
 </style>
 </head>
 <body>
@@ -91,20 +104,38 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
     <button class="btn alt" id="again" style="display:none">View last result</button>
   </section>
 
+  <section class="view" id="v-lib">
+    <div id="libHead"></div>
+    <div id="libGrid"></div>
+    <div id="libEmpty">No pictures yet.<br>Every 3D picture you make shows up here automatically.</div>
+  </section>
+
   <nav>
     <button class="tab on" data-t="cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera 3D</button>
     <button class="tab" data-t="photo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>Photo 3D</button>
+    <button class="tab" data-t="lib"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Library</button>
   </nav>
 </div>
 
-<div id="viewer">
+<!-- viewer for a fresh result -->
+<div class="full" id="viewer">
   <canvas id="out"></canvas>
-  <button id="vclose">&#10005;</button>
-  <div id="vbar">
+  <div class="top ui"><button class="pill" id="vshare">Share</button><button class="xbtn" id="vclose">&#10005;</button></div>
+  <div class="bot ui">
     <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
     <div id="strRow">3D strength: <b id="sv">3</b>%<input type="range" id="str" min="0.5" max="8" step="0.5" value="3"></div>
     <div class="seg"><button id="mPar" class="on">Parallel</button><button id="mCross">Cross-eye</button></div>
-    <div class="row"><button class="btn" id="save">Save / Share</button><button class="btn alt" id="retake">Done</button></div>
+    <div class="row"><button class="btn" id="save">Save to gallery</button><button class="btn alt" id="retake">Done</button></div>
+  </div>
+</div>
+
+<!-- viewer for a library picture -->
+<div class="full" id="detail">
+  <img class="big" id="dimg" alt="">
+  <div class="top ui"><button class="pill" id="dshare">Share</button><button class="xbtn" id="dclose">&#10005;</button></div>
+  <div class="bot ui">
+    <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
+    <div class="row"><button class="btn" id="dsave">Save to gallery</button><button class="btn bad" id="ddel">Delete</button></div>
   </div>
 </div>
 
@@ -123,25 +154,136 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
       <li>Take shot 1, then slide the phone 5-8 cm sideways.</li>
       <li>Match the faded ghost image and don't tilt or move up/down.</li>
     </ol>
+    <h3>Library</h3>
+    <ol>
+      <li>Every picture you make is kept in the Library tab automatically.</li>
+      <li>Open one and tap Delete to remove it from the app and from your gallery.</li>
+    </ol>
     <button class="btn" id="helpClose" style="width:100%">Got it</button>
   </div>
 </div>
 
+<div id="toast"></div>
+
 <script>
 const $=id=>document.getElementById(id);
 const out=$('out');
-const V={parallel:true,render:null,photo:false};
+const V={parallel:true,render:null,photo:false,item:null,dirty:false};
+const D={item:null};
+let photoItem=null;
 const MODEL_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+const cap=()=>(window.Capacitor&&window.Capacitor.Plugins)||null;
+const FS=()=>{const c=cap();return c&&c.Filesystem};
+const GAL=()=>{const c=cap();return c&&c.StereoGallery};
+const SHARE=()=>{const c=cap();return c&&c.Share};
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(m){
+  const t=$('toast');t.textContent=m;t.style.display='block';
+  clearTimeout(toastT);toastT=setTimeout(()=>t.style.display='none',2200);
+}
 
 /* ---------- tabs ---------- */
 function setTab(t){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t));
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   if(t==='cam')startCam();else{stopCam();resetCam();}
+  if(t==='lib')renderLib();
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 $('helpBtn').onclick=()=>$('help').style.display='flex';
 $('helpClose').onclick=()=>$('help').style.display='none';
+
+/* ---------- library storage ---------- */
+let lib=[];
+async function loadLib(){
+  const fs=FS();
+  if(!fs){lib=[];return;}
+  try{
+    const r=await fs.readFile({path:'library/index.json',directory:'DATA',encoding:'utf8'});
+    lib=JSON.parse(r.data)||[];
+  }catch(e){lib=[];}
+}
+async function saveIndex(){
+  const fs=FS();
+  if(!fs)return;
+  await fs.writeFile({path:'library/index.json',directory:'DATA',encoding:'utf8',data:JSON.stringify(lib),recursive:true});
+}
+async function itemSrc(it){
+  const r=await FS().getUri({path:it.file,directory:'DATA'});
+  return cap().Capacitor?null:window.Capacitor.convertFileSrc(r.uri)+'?v='+(it.v||0);
+}
+async function renderLib(){
+  const grid=$('libGrid'),empty=$('libEmpty'),head=$('libHead');
+  if(!FS()){
+    grid.innerHTML='';empty.style.display='block';
+    empty.innerHTML='The library works in the installed app.';head.textContent='';
+    return;
+  }
+  empty.innerHTML='No pictures yet.<br>Every 3D picture you make shows up here automatically.';
+  empty.style.display=lib.length?'none':'block';
+  head.textContent=lib.length?(lib.length+(lib.length===1?' picture':' pictures')):'';
+  const srcs=await Promise.all(lib.map(it=>itemSrc(it).catch(()=>'')));
+  grid.innerHTML='';
+  lib.forEach((it,i)=>{
+    const d=document.createElement('div');
+    d.className='thumb';
+    d.style.aspectRatio=String(it.ar||1.5);
+    d.style.backgroundImage='url("'+srcs[i]+'")';
+    if(it.gallery){const b=document.createElement('i');b.textContent='Saved';d.appendChild(b);}
+    d.onclick=()=>openDetail(it,srcs[i]);
+    grid.appendChild(d);
+  });
+}
+function currentB64(){return out.toDataURL('image/jpeg',0.92).split(',')[1];}
+
+/* keep the current viewer picture in the library (once per picture, updated if changed) */
+async function commitLib(){
+  const fs=FS();
+  if(!fs)return V.item;
+  if(V.item&&!V.dirty)return V.item;
+  const now=Date.now();
+  if(!V.item){
+    V.item={id:now,file:'library/s_'+now+'.jpg',ts:now,gallery:null,ar:out.width/2/out.height,v:now};
+    lib.unshift(V.item);
+  }
+  V.item.v=now;
+  V.item.ar=out.width/2/out.height;
+  await fs.writeFile({path:V.item.file,directory:'DATA',data:currentB64(),recursive:true});
+  await saveIndex();
+  V.dirty=false;
+  if(V.photo)photoItem=V.item;
+  return V.item;
+}
+
+/* ---------- gallery save + share helpers ---------- */
+async function toGallery(item,b64){
+  const g=GAL();
+  if(!g){
+    const a=document.createElement('a');
+    a.href='data:image/jpeg;base64,'+b64;a.download='stereo3d_'+Date.now()+'.jpg';a.click();
+    return;
+  }
+  if(item&&item.gallery){try{await g.remove({uri:item.gallery});}catch(e){}}
+  const r=await g.save({data:b64,name:'stereo3d_'+(item?item.id:Date.now())+'.jpg'});
+  if(item){item.gallery=r.uri;await saveIndex();}
+}
+async function shareB64(b64){
+  const fs=FS(),sh=SHARE();
+  if(fs&&sh){
+    const r=await fs.writeFile({path:'share_'+Date.now()+'.jpg',data:b64,directory:'CACHE'});
+    await sh.share({title:'Stereo 3D',files:[r.uri]});
+  }else{
+    const a=document.createElement('a');
+    a.href='data:image/jpeg;base64,'+b64;a.download='stereo3d_'+Date.now()+'.jpg';a.click();
+  }
+}
+function setBtn(btn,state){
+  if(state==='ok'){btn.textContent='\u2713 Saved';btn.classList.add('ok');}
+  else if(state==='busy'){btn.textContent='Saving...';btn.classList.remove('ok');}
+  else{btn.textContent='Save to gallery';btn.classList.remove('ok');}
+}
 
 /* ---------- camera ---------- */
 const cam=$('cam'),ghost=$('ghost'),txt=$('txt'),warn=$('warn');
@@ -215,40 +357,110 @@ function renderCam(){
   x.drawImage(L,0,0);x.drawImage(R,L.width,0);
 }
 
-/* ---------- viewer ---------- */
+/* ---------- result viewer ---------- */
 function setSeg(){
   $('mPar').classList.toggle('on',V.parallel);
   $('mCross').classList.toggle('on',!V.parallel);
 }
 function openViewer(fn,isPhoto){
-  V.render=fn;V.photo=isPhoto;
+  V.render=fn;V.photo=isPhoto;V.dirty=true;
+  V.item=isPhoto?photoItem:null;
   $('strRow').style.display=isPhoto?'block':'none';
+  $('viewer').classList.remove('hide');
   $('viewer').style.display='block';
-  $('vbar').classList.remove('hide');
+  setBtn($('save'),'idle');
   setSeg();fn();
+  if(V.item&&V.item.gallery)setBtn($('save'),'idle');
 }
-function closeViewer(){
+async function closeViewer(){
+  try{await commitLib();}catch(e){}
   $('viewer').style.display='none';
   if(!V.photo)resetCam();
+  renderLib();
+  toast('Kept in your Library');
+}
+function changed(){
+  V.dirty=true;
+  setBtn($('save'),'idle');
+  V.render&&V.render();
 }
 $('vclose').onclick=closeViewer;
 $('retake').onclick=closeViewer;
-out.onclick=()=>$('vbar').classList.toggle('hide');
-$('mPar').onclick=()=>{V.parallel=true;setSeg();V.render&&V.render()};
-$('mCross').onclick=()=>{V.parallel=false;setSeg();V.render&&V.render()};
-$('str').oninput=()=>{$('sv').textContent=$('str').value;V.render&&V.render()};
+out.onclick=()=>$('viewer').classList.toggle('hide');
+$('mPar').onclick=()=>{V.parallel=true;setSeg();changed()};
+$('mCross').onclick=()=>{V.parallel=false;setSeg();changed()};
+$('str').oninput=()=>{$('sv').textContent=$('str').value;changed()};
+
 $('save').onclick=async()=>{
-  const dataUrl=out.toDataURL('image/jpeg',0.92);
-  const name='stereo3d_'+Date.now()+'.jpg';
-  const P=window.Capacitor&&window.Capacitor.Plugins;
+  const btn=$('save');
+  setBtn(btn,'busy');
   try{
-    if(P&&P.Filesystem&&P.Share){
-      const r=await P.Filesystem.writeFile({path:name,data:dataUrl.split(',')[1],directory:'CACHE'});
-      await P.Share.share({title:'Stereo 3D',files:[r.uri]});
-    }else{
-      const a=document.createElement('a');a.href=dataUrl;a.download=name;a.click();
-    }
+    const item=await commitLib();
+    await toGallery(item,currentB64());
+    setBtn(btn,'ok');
+    toast('Saved to gallery');
+  }catch(e){
+    setBtn(btn,'idle');
+    toast('Save failed: '+(e&&e.message?e.message:e));
+  }
+};
+$('vshare').onclick=async()=>{
+  try{
+    await commitLib();
+    await shareB64(currentB64());
   }catch(e){}
+};
+
+/* ---------- library detail ---------- */
+async function openDetail(it,src){
+  D.item=it;
+  $('dimg').src=src;
+  $('detail').classList.remove('hide');
+  $('detail').style.display='block';
+  setBtn($('dsave'),it.gallery?'ok':'idle');
+}
+function closeDetail(){
+  $('detail').style.display='none';
+  $('dimg').src='';
+  D.item=null;
+}
+$('dclose').onclick=closeDetail;
+$('dimg').onclick=()=>$('detail').classList.toggle('hide');
+async function detailB64(){
+  const r=await FS().readFile({path:D.item.file,directory:'DATA'});
+  return r.data;
+}
+$('dshare').onclick=async()=>{
+  try{await shareB64(await detailB64());}catch(e){}
+};
+$('dsave').onclick=async()=>{
+  const btn=$('dsave'),it=D.item;
+  if(!it)return;
+  setBtn(btn,'busy');
+  try{
+    await toGallery(it,await detailB64());
+    setBtn(btn,'ok');
+    toast('Saved to gallery');
+    renderLib();
+  }catch(e){
+    setBtn(btn,'idle');
+    toast('Save failed: '+(e&&e.message?e.message:e));
+  }
+};
+$('ddel').onclick=async()=>{
+  const it=D.item;
+  if(!it)return;
+  if(!confirm('Delete this picture from the app and from your gallery?'))return;
+  try{
+    if(it.gallery&&GAL()){await GAL().remove({uri:it.gallery});}
+  }catch(e){}
+  try{await FS().deleteFile({path:it.file,directory:'DATA'});}catch(e){}
+  lib=lib.filter(x=>x.id!==it.id);
+  if(photoItem&&photoItem.id===it.id)photoItem=null;
+  try{await saveIndex();}catch(e){}
+  closeDetail();
+  renderLib();
+  toast('Deleted');
 };
 
 /* ---------- photo to 3D ---------- */
@@ -300,6 +512,7 @@ $('file').onchange=async e=>{
     pstatus.textContent='Done!';
     pbar.style.display='none';
     $('again').style.display='inline-block';
+    photoItem=null;
     openViewer(renderPhoto,true);
   }catch(err){
     pbar.style.display='none';
@@ -331,7 +544,7 @@ function renderPhoto(){
   ctx.putImageData(img,0,0);
 }
 
-startCam();
+loadLib().then(startCam);
 </script>
 </body>
 </html>
