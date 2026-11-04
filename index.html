@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>3D Photo Maker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#fff;font-family:system-ui,sans-serif;height:100vh;overflow:hidden}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+#ghost{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4;display:none;pointer-events:none}
+#cross{position:fixed;left:50%;top:50%;width:40px;height:40px;margin:-20px;border:2px solid #0f0;border-radius:50%;pointer-events:none}
+#cross:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:#0f0;border-radius:50%}
+#msg{position:fixed;top:0;left:0;right:0;padding:12px;background:#000a;text-align:center;font-size:15px}
+#warn{color:#ff6b6b;font-weight:bold;min-height:20px}
+#bar{position:fixed;bottom:0;left:0;right:0;padding:14px;background:#000a;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+button{padding:12px 18px;border:0;border-radius:10px;background:#2d7cff;color:#fff;font-size:16px}
+button.alt{background:#444}
+#shutter{width:72px;height:72px;border-radius:50%;background:#fff;border:5px solid #888}
+#result{position:fixed;inset:0;background:#000;display:none;flex-direction:column}
+#result canvas{flex:1;min-height:0;width:100%;object-fit:contain}
+#rbar{padding:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<video id="cam" autoplay playsinline muted></video>
+<img id="ghost">
+<div id="cross"></div>
+<div id="msg"><div id="txt">Starting camera...</div><div id="warn"></div></div>
+<div id="bar">
+  <button class="alt" id="dir">Moving: RIGHT</button>
+  <button id="shutter"></button>
+</div>
+<div id="result">
+  <canvas id="out"></canvas>
+  <div id="rbar">
+    <button id="mode">Mode: PARALLEL (far view)</button>
+    <button id="save">Save</button>
+    <button class="alt" id="retake">Retake</button>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const cam=$('cam'),ghost=$('ghost'),txt=$('txt'),warn=$('warn');
+let shots=[],moveRight=true,parallel=true,ori0=null,ori=null;
+
+async function start(){
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false});
+    cam.srcObject=s;
+    txt.textContent="Pick a point in the room, put it in the green circle, tap the button.";
+  }catch(e){txt.textContent="Camera blocked: "+e.message}
+}
+async function askSensors(){
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
+      await DeviceOrientationEvent.requestPermission();
+    }
+  }catch(e){}
+  window.addEventListener('deviceorientation',e=>{
+    ori={a:e.alpha||0,b:e.beta||0,g:e.gamma||0};
+    if(ori0){
+      const db=Math.abs(ori.b-ori0.b),dg=Math.abs(ori.g-ori0.g);
+      warn.textContent=(db>3||dg>3)?"Tilt/up-down drift! Keep phone level like shot 1":"";
+    }
+  });
+}
+function grab(){
+  const c=document.createElement('canvas');
+  const sc=Math.min(1,1600/cam.videoWidth);
+  c.width=cam.videoWidth*sc;c.height=cam.videoHeight*sc;
+  c.getContext('2d').drawImage(cam,0,0,c.width,c.height);
+  return c;
+}
+$('dir').onclick=()=>{
+  if(shots.length)return;
+  moveRight=!moveRight;
+  $('dir').textContent="Moving: "+(moveRight?"RIGHT":"LEFT");
+};
+$('shutter').onclick=async()=>{
+  if(!cam.videoWidth)return;
+  if(!shots.length){
+    await askSensors();
+    shots.push(grab());
+    ori0=ori?{...ori}:null;
+    ghost.src=shots[0].toDataURL('image/jpeg',.7);
+    ghost.style.display='block';
+    txt.textContent="Now slide phone "+(moveRight?"RIGHT":"LEFT")+" about 5-8 cm (a thumb to a palm width), keep the point in the circle and match the ghost image. Don't tilt or go up/down. Tap again.";
+  }else{
+    shots.push(grab());
+    ghost.style.display='none';
+    build();
+  }
+};
+function build(){
+  const [a,b]=shots;
+  // first shot is the LEFT eye view if you moved right
+  let L=moveRight?a:b,R=moveRight?b:a;
+  if(!parallel){[L,R]=[R,L]}
+  const o=$('out');
+  o.width=L.width*2;o.height=L.height;
+  const x=o.getContext('2d');
+  x.drawImage(L,0,0);
+  x.drawImage(R,L.width,0);
+  $('result').style.display='flex';
+}
+$('mode').onclick=()=>{
+  parallel=!parallel;
+  $('mode').textContent=parallel?"Mode: PARALLEL (far view)":"Mode: CROSS-EYE";
+  build();
+};
+$('save').onclick=()=>{
+  $('out').toBlob(b=>{
+    const u=URL.createObjectURL(b),l=document.createElement('a');
+    l.href=u;l.download="stereo_"+Date.now()+".jpg";l.click();
+  },'image/jpeg',.92);
+};
+$('retake').onclick=()=>{
+  shots=[];ori0=null;warn.textContent="";
+  $('result').style.display='none';
+  txt.textContent="Pick a point, put it in the circle, tap the button.";
+};
+start();
+</script>
+</body>
+</html>
