@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Photo to 3D</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;padding:12px;text-align:center}
+h2{margin:6px 0 10px}
+button,label.btn{display:inline-block;padding:12px 18px;border:0;border-radius:10px;background:#2d7cff;color:#fff;font-size:16px;margin:4px}
+button.alt{background:#444}
+#status{min-height:22px;margin:8px 0;color:#9cf;font-size:14px}
+#out{width:100%;background:#000;margin-top:8px;display:none}
+#ctl{display:none;margin-top:8px}
+input[type=range]{width:80%}
+a{color:#9cf}
+</style>
+</head>
+<body>
+<h2>Photo to 3D</h2>
+<label class="btn">Choose photo<input type="file" id="file" accept="image/*" hidden></label>
+<div id="status">Pick a photo from your gallery. First time downloads the AI model (~30-50 MB), after that it is cached.</div>
+<canvas id="out"></canvas>
+<div id="ctl">
+  <div>3D strength: <span id="sv">3</span>%</div>
+  <input type="range" id="str" min="0.5" max="8" step="0.5" value="3">
+  <div>
+    <button id="mode">Mode: PARALLEL (far view)</button>
+    <button id="save">Save</button>
+  </div>
+  <p style="font-size:13px;color:#aaa">Rotate phone to landscape, look far away like at a mountain, then slowly bring your focus to the screen until it clicks.</p>
+  <a href="index.html">Open camera maker</a>
+</div>
+<script type="module">
+import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+
+const $=id=>document.getElementById(id);
+const status=$('status'),out=$('out');
+let estimator=null,srcData=null,depth=null,W=0,H=0,parallel=true;
+
+async function getEstimator(){
+  if(estimator)return estimator;
+  status.textContent="Loading AI depth model...";
+  estimator=await pipeline('depth-estimation','onnx-community/depth-anything-v2-small',{
+    progress_callback:p=>{
+      if(p.status==='progress')status.textContent="Downloading model: "+Math.round(p.progress||0)+"%";
+    }
+  });
+  return estimator;
+}
+
+$('file').onchange=async e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  try{
+    status.textContent="Reading photo...";
+    const bmp=await createImageBitmap(f);
+    const sc=Math.min(1,900/bmp.width);
+    W=Math.round(bmp.width*sc);H=Math.round(bmp.height*sc);
+    const c=document.createElement('canvas');
+    c.width=W;c.height=H;
+    const cx=c.getContext('2d');
+    cx.drawImage(bmp,0,0,W,H);
+    srcData=cx.getImageData(0,0,W,H);
+    const est=await getEstimator();
+    status.textContent="Working out depth... (10-30 sec)";
+    const res=await est(c.toDataURL('image/jpeg',0.9));
+    const d=res.depth;
+    const ch=d.channels||1;
+    depth=new Uint8Array(W*H);
+    for(let y=0;y<H;y++){
+      const sy=Math.min(d.height-1,Math.floor(y*d.height/H));
+      for(let x=0;x<W;x++){
+        const sx=Math.min(d.width-1,Math.floor(x*d.width/W));
+        depth[y*W+x]=d.data[(sy*d.width+sx)*ch];
+      }
+    }
+    status.textContent="Done! Rotate to landscape and view it.";
+    $('ctl').style.display='block';
+    out.style.display='block';
+    render();
+  }catch(err){
+    status.textContent="Error: "+err.message;
+  }
+};
+
+function render(){
+  if(!srcData||!depth)return;
+  const s=(+$('str').value/100)*W;
+  const sign=parallel?1:-1;
+  out.width=W*2;out.height=H;
+  const ctx=out.getContext('2d');
+  const img=ctx.createImageData(W*2,H);
+  const sd=srcData.data,od=img.data;
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const disp=(depth[y*W+x]/255-0.5)*s*sign;
+      let xl=Math.round(x-disp),xr=Math.round(x+disp);
+      if(xl<0)xl=0;if(xl>W-1)xl=W-1;
+      if(xr<0)xr=0;if(xr>W-1)xr=W-1;
+      const li=(y*W+xl)*4,ri=(y*W+xr)*4;
+      const lo=(y*W*2+x)*4,ro=(y*W*2+W+x)*4;
+      od[lo]=sd[li];od[lo+1]=sd[li+1];od[lo+2]=sd[li+2];od[lo+3]=255;
+      od[ro]=sd[ri];od[ro+1]=sd[ri+1];od[ro+2]=sd[ri+2];od[ro+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+$('str').oninput=()=>{$('sv').textContent=$('str').value;render()};
+$('mode').onclick=()=>{
+  parallel=!parallel;
+  $('mode').textContent=parallel?"Mode: PARALLEL (far view)":"Mode: CROSS-EYE";
+  render();
+};
+$('save').onclick=()=>{
+  out.toBlob(b=>{
+    const u=URL.createObjectURL(b),a=document.createElement('a');
+    a.href=u;a.download="stereo_photo_"+Date.now()+".jpg";a.click();
+  },'image/jpeg',0.92);
+};
+</script>
+</body>
+</html>
