@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0f1a">
+<title>Stereo 3D</title>
+<style>
+:root{--bg:#0b0f1a;--card:#151b2b;--line:#252d42;--acc:#4f8cff;--acc2:#8a5cff;--txt:#eef1f8;--mut:#8b94ab}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+#app{display:flex;flex-direction:column;height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+header svg.logo{width:30px;height:30px}
+header h1{font-size:19px;margin:0;flex:1;letter-spacing:.3px}
+.ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:17px}
+.view{display:none;flex:1;min-height:0;position:relative}
+.view.on{display:flex}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:10px 0 8px;background:none;border:0;color:var(--mut);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--acc)}
+.btn{border:0;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.btn.alt{background:var(--card);border:1px solid var(--line);font-weight:500}
+/* camera */
+#cam,#ghost{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#ghost{opacity:.4;display:none;pointer-events:none}
+#cross{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border:2px solid #3dff8f;border-radius:50%;pointer-events:none}
+#cross:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:#3dff8f;border-radius:50%}
+#hint{position:absolute;top:12px;left:12px;right:12px;padding:10px 14px;background:#000b;border-radius:12px;font-size:14px;text-align:center}
+#warn{color:#ff7b7b;font-weight:700}
+#camBar{position:absolute;bottom:0;left:0;right:0;padding:16px;display:flex;align-items:center;justify-content:center;gap:18px;background:linear-gradient(transparent,#000a)}
+#shutter{width:74px;height:74px;border-radius:50%;background:#fff;border:6px solid #9aa3b8}
+#dir{padding:12px 16px;border-radius:24px;border:1px solid #fff5;background:#0008;color:#fff;font-size:15px}
+/* photo */
+#v-photo{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:14px}
+.hero{width:120px;height:120px;border-radius:30px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.hero svg{width:60px;height:60px;stroke:var(--acc);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#v-photo h2{margin:6px 0 0;font-size:22px}
+#v-photo p{margin:0;color:var(--mut);font-size:14px;max-width:320px;line-height:1.45}
+#pstatus{color:#9cc2ff;font-size:14px;min-height:20px}
+#pbar{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
+#pfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
+/* viewer */
+#viewer{position:fixed;inset:0;background:#000;display:none;z-index:50}
+#out{width:100%;height:100%;object-fit:contain;display:block}
+#vbar{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d);display:flex;flex-direction:column;gap:8px;align-items:center}
+#vbar.hide{display:none}
+.seg{display:flex;border:1px solid #fff4;border-radius:12px;overflow:hidden}
+.seg button{background:#0009;color:#fff;border:0;padding:9px 14px;font-size:14px}
+.seg button.on{background:var(--acc)}
+#strRow{width:90%;max-width:420px;font-size:13px;color:#cfd6e8;text-align:center}
+#strRow input{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.row .btn{padding:10px 18px;font-size:15px}
+#vclose{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;width:40px;height:40px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:20px}
+.tip{font-size:12px;color:#aab3c9;text-align:center}
+/* help */
+#help{position:fixed;inset:0;background:#000c;display:none;z-index:60;align-items:flex-end}
+#help .sheet{background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto;user-select:text}
+#help h3{margin:0 0 10px}
+#help ol{margin:0 0 14px;padding-left:20px;color:#cfd6e8;line-height:1.6;font-size:15px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <svg class="logo" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#8a5cff"/></linearGradient></defs><rect x="2" y="6" width="16" height="20" rx="4" fill="url(#g)"/><rect x="14" y="6" width="16" height="20" rx="4" fill="none" stroke="#8a5cff" stroke-width="2"/></svg>
+    <h1>Stereo 3D</h1>
+    <button class="ib" id="helpBtn">?</button>
+  </header>
+
+  <section class="view on" id="v-cam">
+    <video id="cam" autoplay playsinline muted></video>
+    <img id="ghost" alt="">
+    <div id="cross"></div>
+    <div id="hint"><div id="txt">Starting camera...</div><div id="warn"></div></div>
+    <div id="camBar">
+      <button id="dir">Move RIGHT &rarr;</button>
+      <button id="shutter" aria-label="Capture"></button>
+    </div>
+  </section>
+
+  <section class="view" id="v-photo">
+    <div class="hero"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></div>
+    <h2>Photo to 3D</h2>
+    <p>Pick any photo from your gallery. AI estimates depth and builds a 3D pair you can view with your eyes.</p>
+    <div id="pbar"><div id="pfill"></div></div>
+    <div id="pstatus"></div>
+    <label class="btn" id="pickBtn">Choose Photo<input type="file" id="file" accept="image/*" hidden></label>
+    <button class="btn alt" id="again" style="display:none">View last result</button>
+  </section>
+
+  <nav>
+    <button class="tab on" data-t="cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera 3D</button>
+    <button class="tab" data-t="photo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>Photo 3D</button>
+  </nav>
+</div>
+
+<div id="viewer">
+  <canvas id="out"></canvas>
+  <button id="vclose">&#10005;</button>
+  <div id="vbar">
+    <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
+    <div id="strRow">3D strength: <b id="sv">3</b>%<input type="range" id="str" min="0.5" max="8" step="0.5" value="3"></div>
+    <div class="seg"><button id="mPar" class="on">Parallel</button><button id="mCross">Cross-eye</button></div>
+    <div class="row"><button class="btn" id="save">Save / Share</button><button class="btn alt" id="retake">Done</button></div>
+  </div>
+</div>
+
+<div id="help">
+  <div class="sheet">
+    <h3>How to see 3D</h3>
+    <ol>
+      <li>Rotate your phone to landscape.</li>
+      <li>Look far away, like at a mountain peak. Don't focus on the screen.</li>
+      <li>Hold the phone in front of you and slowly shift your focus closer to the screen.</li>
+      <li>At one point it clicks and the picture pops into 3D.</li>
+    </ol>
+    <h3>Camera 3D tips</h3>
+    <ol>
+      <li>Pick a point and keep it in the green circle.</li>
+      <li>Take shot 1, then slide the phone 5-8 cm sideways.</li>
+      <li>Match the faded ghost image and don't tilt or move up/down.</li>
+    </ol>
+    <button class="btn" id="helpClose" style="width:100%">Got it</button>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const out=$('out');
+const V={parallel:true,render:null,photo:false};
+const MODEL_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  if(t==='cam')startCam();else{stopCam();resetCam();}
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+$('helpBtn').onclick=()=>$('help').style.display='flex';
+$('helpClose').onclick=()=>$('help').style.display='none';
+
+/* ---------- camera ---------- */
+const cam=$('cam'),ghost=$('ghost'),txt=$('txt'),warn=$('warn');
+let stream=null,shots=[],moveRight=true,ori0=null,ori=null,sensorsOn=false;
+const HINT1='Pick a point in the room, keep it in the green circle, tap the button.';
+
+async function startCam(){
+  if(stream)return;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false});
+    cam.srcObject=stream;
+    txt.textContent=HINT1;
+  }catch(e){txt.textContent='Camera access is needed: '+e.message}
+}
+function stopCam(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;cam.srcObject=null;}
+}
+function resetCam(){
+  shots=[];ori0=null;warn.textContent='';ghost.style.display='none';
+  txt.textContent=HINT1;
+}
+async function askSensors(){
+  if(sensorsOn)return;
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
+      await DeviceOrientationEvent.requestPermission();
+    }
+  }catch(e){}
+  window.addEventListener('deviceorientation',e=>{
+    ori={b:e.beta||0,g:e.gamma||0};
+    if(ori0&&shots.length===1){
+      const db=Math.abs(ori.b-ori0.b),dg=Math.abs(ori.g-ori0.g);
+      warn.textContent=(db>3||dg>3)?'Tilt drift! Keep the phone level like shot 1':'';
+    }
+  });
+  sensorsOn=true;
+}
+function grab(){
+  const c=document.createElement('canvas');
+  const sc=Math.min(1,1600/cam.videoWidth);
+  c.width=Math.round(cam.videoWidth*sc);c.height=Math.round(cam.videoHeight*sc);
+  c.getContext('2d').drawImage(cam,0,0,c.width,c.height);
+  return c;
+}
+$('dir').onclick=()=>{
+  if(shots.length)return;
+  moveRight=!moveRight;
+  $('dir').innerHTML=moveRight?'Move RIGHT &rarr;':'&larr; Move LEFT';
+};
+$('shutter').onclick=async()=>{
+  if(!cam.videoWidth)return;
+  if(!shots.length){
+    await askSensors();
+    shots.push(grab());
+    ori0=ori?{...ori}:null;
+    ghost.src=shots[0].toDataURL('image/jpeg',.7);
+    ghost.style.display='block';
+    txt.textContent='Now slide the phone '+(moveRight?'RIGHT':'LEFT')+' about 5-8 cm. Keep the point in the circle and match the ghost image.';
+  }else{
+    shots.push(grab());
+    ghost.style.display='none';
+    openViewer(renderCam,false);
+  }
+};
+function renderCam(){
+  const [a,b]=shots;
+  let L=moveRight?a:b,R=moveRight?b:a;
+  if(!V.parallel){[L,R]=[R,L];}
+  out.width=L.width*2;out.height=L.height;
+  const x=out.getContext('2d');
+  x.drawImage(L,0,0);x.drawImage(R,L.width,0);
+}
+
+/* ---------- viewer ---------- */
+function setSeg(){
+  $('mPar').classList.toggle('on',V.parallel);
+  $('mCross').classList.toggle('on',!V.parallel);
+}
+function openViewer(fn,isPhoto){
+  V.render=fn;V.photo=isPhoto;
+  $('strRow').style.display=isPhoto?'block':'none';
+  $('viewer').style.display='block';
+  $('vbar').classList.remove('hide');
+  setSeg();fn();
+}
+function closeViewer(){
+  $('viewer').style.display='none';
+  if(!V.photo)resetCam();
+}
+$('vclose').onclick=closeViewer;
+$('retake').onclick=closeViewer;
+out.onclick=()=>$('vbar').classList.toggle('hide');
+$('mPar').onclick=()=>{V.parallel=true;setSeg();V.render&&V.render()};
+$('mCross').onclick=()=>{V.parallel=false;setSeg();V.render&&V.render()};
+$('str').oninput=()=>{$('sv').textContent=$('str').value;V.render&&V.render()};
+$('save').onclick=async()=>{
+  const dataUrl=out.toDataURL('image/jpeg',0.92);
+  const name='stereo3d_'+Date.now()+'.jpg';
+  const P=window.Capacitor&&window.Capacitor.Plugins;
+  try{
+    if(P&&P.Filesystem&&P.Share){
+      const r=await P.Filesystem.writeFile({path:name,data:dataUrl.split(',')[1],directory:'CACHE'});
+      await P.Share.share({title:'Stereo 3D',files:[r.uri]});
+    }else{
+      const a=document.createElement('a');a.href=dataUrl;a.download=name;a.click();
+    }
+  }catch(e){}
+};
+
+/* ---------- photo to 3D ---------- */
+let estimator=null,srcData=null,depth=null,W=0,H=0;
+const pstatus=$('pstatus'),pbar=$('pbar'),pfill=$('pfill');
+async function getEstimator(){
+  if(estimator)return estimator;
+  pstatus.textContent='Loading AI depth model...';
+  const {pipeline}=await import(MODEL_URL);
+  estimator=await pipeline('depth-estimation','onnx-community/depth-anything-v2-small',{
+    progress_callback:p=>{
+      if(p.status==='progress'){
+        const v=Math.round(p.progress||0);
+        pstatus.textContent='Downloading AI model: '+v+'%';
+        pfill.style.width=v+'%';
+      }
+    }
+  });
+  return estimator;
+}
+$('file').onchange=async e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  pbar.style.display='block';pfill.style.width='5%';
+  try{
+    pstatus.textContent='Reading photo...';
+    const bmp=await createImageBitmap(f);
+    const sc=Math.min(1,900/bmp.width);
+    W=Math.round(bmp.width*sc);H=Math.round(bmp.height*sc);
+    const c=document.createElement('canvas');
+    c.width=W;c.height=H;
+    const cx=c.getContext('2d');
+    cx.drawImage(bmp,0,0,W,H);
+    srcData=cx.getImageData(0,0,W,H);
+    const est=await getEstimator();
+    pfill.style.width='100%';
+    pstatus.textContent='Working out depth... (10-30 sec)';
+    const res=await est(c.toDataURL('image/jpeg',0.9));
+    const d=res.depth;
+    const ch=d.channels||1;
+    depth=new Uint8Array(W*H);
+    for(let y=0;y<H;y++){
+      const sy=Math.min(d.height-1,Math.floor(y*d.height/H));
+      for(let x=0;x<W;x++){
+        const sx=Math.min(d.width-1,Math.floor(x*d.width/W));
+        depth[y*W+x]=d.data[(sy*d.width+sx)*ch];
+      }
+    }
+    pstatus.textContent='Done!';
+    pbar.style.display='none';
+    $('again').style.display='inline-block';
+    openViewer(renderPhoto,true);
+  }catch(err){
+    pbar.style.display='none';
+    pstatus.textContent='Error: '+err.message+' (first run needs internet to download the AI model)';
+  }
+  e.target.value='';
+};
+$('again').onclick=()=>openViewer(renderPhoto,true);
+function renderPhoto(){
+  if(!srcData||!depth)return;
+  const s=(+$('str').value/100)*W;
+  const sign=V.parallel?1:-1;
+  out.width=W*2;out.height=H;
+  const ctx=out.getContext('2d');
+  const img=ctx.createImageData(W*2,H);
+  const sd=srcData.data,od=img.data;
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const disp=(depth[y*W+x]/255-0.5)*s*sign;
+      let xl=Math.round(x-disp),xr=Math.round(x+disp);
+      if(xl<0)xl=0;if(xl>W-1)xl=W-1;
+      if(xr<0)xr=0;if(xr>W-1)xr=W-1;
+      const li=(y*W+xl)*4,ri=(y*W+xr)*4;
+      const lo=(y*W*2+x)*4,ro=(y*W*2+W+x)*4;
+      od[lo]=sd[li];od[lo+1]=sd[li+1];od[lo+2]=sd[li+2];od[lo+3]=255;
+      od[ro]=sd[ri];od[ro+1]=sd[ri+1];od[ro+2]=sd[ri+2];od[ro+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+startCam();
+</script>
+</body>
+</html>
