@@ -20,7 +20,7 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 .tab{flex:1;padding:10px 0 8px;background:none;border:0;color:var(--mut);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--acc)}
-.btn{border:0;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.btn{border:0;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2));display:inline-block}
 .btn.alt{background:var(--card);border:1px solid var(--line);font-weight:500}
 .btn.ok{background:var(--ok)}
 .btn.bad{background:var(--bad)}
@@ -34,12 +34,12 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 #camBar{position:absolute;bottom:0;left:0;right:0;padding:16px;display:flex;align-items:center;justify-content:center;gap:18px;background:linear-gradient(transparent,#000a)}
 #shutter{width:74px;height:74px;border-radius:50%;background:#fff;border:6px solid #9aa3b8}
 #dir{padding:12px 16px;border-radius:24px;border:1px solid #fff5;background:#0008;color:#fff;font-size:15px}
-/* photo */
-#v-photo{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:14px}
+/* photo + video start screens */
+#v-photo,#v-video{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:14px}
 .hero{width:120px;height:120px;border-radius:30px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
 .hero svg{width:60px;height:60px;stroke:var(--acc);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-#v-photo h2{margin:6px 0 0;font-size:22px}
-#v-photo p{margin:0;color:var(--mut);font-size:14px;max-width:320px;line-height:1.45}
+#v-photo h2,#v-video h2{margin:6px 0 0;font-size:22px}
+#v-photo p,#v-video p{margin:0;color:var(--mut);font-size:14px;max-width:320px;line-height:1.45}
 #pstatus{color:#9cc2ff;font-size:14px;min-height:20px}
 #pbar{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
 #pfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
@@ -52,20 +52,24 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 #libEmpty{display:none;text-align:center;color:var(--mut);margin:auto;line-height:1.5;padding:30px}
 /* overlays */
 .full{position:fixed;inset:0;background:#000;display:none;z-index:50}
-.full canvas,.full img.big{width:100%;height:100%;object-fit:contain;display:block}
+.full canvas,.full img.big,.full video.big{width:100%;height:100%;object-fit:contain;display:block}
 .full.hide .ui{display:none}
 .top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#000c,transparent)}
 .pill{border:0;border-radius:22px;padding:10px 18px;font-size:15px;font-weight:600;color:#fff;background:#ffffff26;backdrop-filter:blur(6px)}
 .xbtn{width:40px;height:40px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:20px}
-.bot{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d);display:flex;flex-direction:column;gap:8px;align-items:center}
+.bot{position:absolute;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d);display:flex;flex-direction:column;gap:8px;align-items:center;max-height:75%;overflow:auto}
 .seg{display:flex;border:1px solid #fff4;border-radius:12px;overflow:hidden}
 .seg button{background:#0009;color:#fff;border:0;padding:9px 14px;font-size:14px}
 .seg button.on{background:var(--acc)}
-#strRow{width:90%;max-width:420px;font-size:13px;color:#cfd6e8;text-align:center}
-#strRow input{width:100%}
+.sl{width:90%;max-width:420px;font-size:13px;color:#cfd6e8;text-align:center}
+.sl input{width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .row .btn{padding:11px 20px;font-size:15px;min-width:130px}
 .tip{font-size:12px;color:#aab3c9;text-align:center}
+/* video render progress */
+#vprog{position:absolute;inset:0;background:#000c;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:5}
+#vpbar{width:240px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+#vpfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2))}
 /* help */
 #help{position:fixed;inset:0;background:#000c;display:none;z-index:60;align-items:flex-end}
 #help .sheet{background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto;user-select:text}
@@ -104,6 +108,14 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
     <button class="btn alt" id="again" style="display:none">View last result</button>
   </section>
 
+  <section class="view" id="v-video">
+    <div class="hero"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10l6-3v10l-6-3z"/></svg></div>
+    <h2>Video 3D</h2>
+    <p>Film in landscape while sliding the phone slowly sideways, or pick a video you already have. It becomes a 3D video you can view with your eyes. The video is silent.</p>
+    <label class="btn">Choose Video<input type="file" id="vfile" accept="video/*" hidden></label>
+    <label class="btn alt">Record Video<input type="file" id="vrec" accept="video/*" capture="environment" hidden></label>
+  </section>
+
   <section class="view" id="v-lib">
     <div id="libHead"></div>
     <div id="libGrid"></div>
@@ -113,25 +125,51 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
   <nav>
     <button class="tab on" data-t="cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera 3D</button>
     <button class="tab" data-t="photo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>Photo 3D</button>
+    <button class="tab" data-t="video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10l6-3v10l-6-3z"/></svg>Video 3D</button>
     <button class="tab" data-t="lib"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Library</button>
   </nav>
 </div>
 
-<!-- viewer for a fresh result -->
+<!-- hidden source video for Video 3D -->
+<video id="vid" playsinline muted style="position:fixed;left:-9999px;top:0;width:2px;height:2px"></video>
+
+<!-- viewer for a fresh photo / camera result -->
 <div class="full" id="viewer">
   <canvas id="out"></canvas>
   <div class="top ui"><button class="pill" id="vshare">Share</button><button class="xbtn" id="vclose">&#10005;</button></div>
   <div class="bot ui">
     <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
-    <div id="strRow">3D strength: <b id="sv">3</b>%<input type="range" id="str" min="0.5" max="8" step="0.5" value="3"></div>
+    <div class="sl" id="strRow">3D strength: <b id="sv">3</b>%<input type="range" id="str" min="0.5" max="8" step="0.5" value="3"></div>
     <div class="seg"><button id="mPar" class="on">Parallel</button><button id="mCross">Cross-eye</button></div>
     <div class="row"><button class="btn" id="save">Save to gallery</button><button class="btn alt" id="retake">Done</button></div>
   </div>
 </div>
 
-<!-- viewer for a library picture -->
+<!-- viewer for Video 3D -->
+<div class="full" id="vviewer">
+  <canvas id="vout"></canvas>
+  <div class="top ui"><button class="pill" id="vvshare">Share</button><button class="xbtn" id="vvclose">&#10005;</button></div>
+  <div class="bot ui">
+    <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
+    <div class="sl">3D strength (frame gap): <b id="vdv">100</b> ms<input type="range" id="vdelay" min="20" max="300" step="10" value="100"></div>
+    <div class="row">
+      <div class="seg"><button id="dRight" class="on">Moved right</button><button id="dLeft">Moved left</button></div>
+      <div class="seg"><button id="vPar" class="on">Parallel</button><button id="vCross">Cross-eye</button></div>
+    </div>
+    <div class="row"><button class="btn alt" id="vplay">Pause</button><button class="btn" id="vsave" data-l="Save video">Save video</button><button class="btn alt" id="vdone">Done</button></div>
+  </div>
+  <div id="vprog">
+    <div id="vptxt">Rendering 3D video... 0%</div>
+    <div id="vpbar"><div id="vpfill"></div></div>
+    <div class="tip">Keep the app open until it finishes</div>
+    <button class="btn alt" id="vpcancel">Cancel</button>
+  </div>
+</div>
+
+<!-- viewer for a library item -->
 <div class="full" id="detail">
   <img class="big" id="dimg" alt="">
+  <video class="big" id="dvid" playsinline muted loop style="display:none"></video>
   <div class="top ui"><button class="pill" id="dshare">Share</button><button class="xbtn" id="dclose">&#10005;</button></div>
   <div class="bot ui">
     <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
@@ -154,9 +192,16 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
       <li>Take shot 1, then slide the phone 5-8 cm sideways.</li>
       <li>Match the faded ghost image and don't tilt or move up/down.</li>
     </ol>
+    <h3>Video 3D tips</h3>
+    <ol>
+      <li>Film in landscape and slide the phone slowly and steadily sideways. No sideways movement means no 3D.</li>
+      <li>Tell the app which way you moved (right or left). If it looks inside out, switch it.</li>
+      <li>Use the 3D strength slider. Faster movement needs a smaller gap.</li>
+      <li>Tap Save video to render it. This takes as long as the video itself.</li>
+    </ol>
     <h3>Library</h3>
     <ol>
-      <li>Every picture you make is kept in the Library tab automatically.</li>
+      <li>Every picture you make is kept in the Library tab automatically. Videos are kept once you save or share them.</li>
       <li>Open one and tap Delete to remove it from the app and from your gallery.</li>
     </ol>
     <button class="btn" id="helpClose" style="width:100%">Got it</button>
@@ -210,9 +255,14 @@ async function saveIndex(){
   if(!fs)return;
   await fs.writeFile({path:'library/index.json',directory:'DATA',encoding:'utf8',data:JSON.stringify(lib),recursive:true});
 }
-async function itemSrc(it){
-  const r=await FS().getUri({path:it.file,directory:'DATA'});
-  return cap().Capacitor?null:window.Capacitor.convertFileSrc(r.uri)+'?v='+(it.v||0);
+async function fileUri(path,dir){
+  const r=await FS().getUri({path:path,directory:dir||'DATA'});
+  return r.uri;
+}
+async function itemSrc(it,which){
+  const p=(it.type==='video'&&which!=='file')?it.poster:it.file;
+  const u=await fileUri(p);
+  return window.Capacitor.convertFileSrc(u)+'?v='+(it.v||0);
 }
 async function renderLib(){
   const grid=$('libGrid'),empty=$('libEmpty'),head=$('libHead');
@@ -223,7 +273,7 @@ async function renderLib(){
   }
   empty.innerHTML='No pictures yet.<br>Every 3D picture you make shows up here automatically.';
   empty.style.display=lib.length?'none':'block';
-  head.textContent=lib.length?(lib.length+(lib.length===1?' picture':' pictures')):'';
+  head.textContent=lib.length?(lib.length+(lib.length===1?' item':' items')):'';
   const srcs=await Promise.all(lib.map(it=>itemSrc(it).catch(()=>'')));
   grid.innerHTML='';
   lib.forEach((it,i)=>{
@@ -231,12 +281,25 @@ async function renderLib(){
     d.className='thumb';
     d.style.aspectRatio=String(it.ar||1.5);
     d.style.backgroundImage='url("'+srcs[i]+'")';
-    if(it.gallery){const b=document.createElement('i');b.textContent='Saved';d.appendChild(b);}
+    const tags=[];
+    if(it.type==='video')tags.push('\u25B6 Video');
+    if(it.gallery)tags.push('Saved');
+    if(tags.length){const b=document.createElement('i');b.textContent=tags.join(' \u00B7 ');d.appendChild(b);}
     d.onclick=()=>openDetail(it,srcs[i]);
     grid.appendChild(d);
   });
 }
 function currentB64(){return out.toDataURL('image/jpeg',0.92).split(',')[1];}
+
+/* remove an item everywhere (library files, gallery copy, index) */
+async function removeItem(it){
+  try{if(it.gallery&&GAL())await GAL().remove({uri:it.gallery});}catch(e){}
+  try{await FS().deleteFile({path:it.file,directory:'DATA'});}catch(e){}
+  if(it.poster){try{await FS().deleteFile({path:it.poster,directory:'DATA'});}catch(e){}}
+  lib=lib.filter(x=>x.id!==it.id);
+  if(photoItem&&photoItem.id===it.id)photoItem=null;
+  try{await saveIndex();}catch(e){}
+}
 
 /* keep the current viewer picture in the library (once per picture, updated if changed) */
 async function commitLib(){
@@ -269,6 +332,14 @@ async function toGallery(item,b64){
   const r=await g.save({data:b64,name:'stereo3d_'+(item?item.id:Date.now())+'.jpg'});
   if(item){item.gallery=r.uri;await saveIndex();}
 }
+async function galleryVideo(item){
+  const g=GAL();
+  if(item.gallery){try{await g.remove({uri:item.gallery});}catch(e){}}
+  const uri=await fileUri(item.file);
+  const r=await g.saveFile({uri:uri,name:'stereo3d_'+item.id+'.'+item.ext,mime:item.mime});
+  item.gallery=r.uri;
+  await saveIndex();
+}
 async function shareB64(b64){
   const fs=FS(),sh=SHARE();
   if(fs&&sh){
@@ -279,10 +350,18 @@ async function shareB64(b64){
     a.href='data:image/jpeg;base64,'+b64;a.download='stereo3d_'+Date.now()+'.jpg';a.click();
   }
 }
+async function shareVideoItem(it){
+  const fs=FS(),sh=SHARE();
+  const name='share_'+Date.now()+'.'+it.ext;
+  await fs.copy({from:it.file,directory:'DATA',to:name,toDirectory:'CACHE'});
+  const u=await fileUri(name,'CACHE');
+  await sh.share({title:'Stereo 3D',files:[u]});
+}
 function setBtn(btn,state){
+  const l=btn.dataset.l||'Save to gallery';
   if(state==='ok'){btn.textContent='\u2713 Saved';btn.classList.add('ok');}
   else if(state==='busy'){btn.textContent='Saving...';btn.classList.remove('ok');}
-  else{btn.textContent='Save to gallery';btn.classList.remove('ok');}
+  else{btn.textContent=l;btn.classList.remove('ok');}
 }
 
 /* ---------- camera ---------- */
@@ -357,7 +436,7 @@ function renderCam(){
   x.drawImage(L,0,0);x.drawImage(R,L.width,0);
 }
 
-/* ---------- result viewer ---------- */
+/* ---------- result viewer (photo + camera) ---------- */
 function setSeg(){
   $('mPar').classList.toggle('on',V.parallel);
   $('mCross').classList.toggle('on',!V.parallel);
@@ -370,7 +449,6 @@ function openViewer(fn,isPhoto){
   $('viewer').style.display='block';
   setBtn($('save'),'idle');
   setSeg();fn();
-  if(V.item&&V.item.gallery)setBtn($('save'),'idle');
 }
 async function closeViewer(){
   try{await commitLib();}catch(e){}
@@ -411,34 +489,335 @@ $('vshare').onclick=async()=>{
   }catch(e){}
 };
 
+/* ---------- Video 3D ---------- */
+const vid=$('vid'),vout=$('vout'),vctx=vout.getContext('2d');
+const VV={gen:0,on:false,delay:100,camRight:true,parallel:true,ew:0,eh:0,url:null,
+  item:null,blob:null,rendered:false,dirty:true,busy:false,cancel:null};
+const RB=32;let ring=[],ringW=0;
+
+function ringInit(){
+  ring=[];
+  for(let i=0;i<RB;i++){
+    const c=document.createElement('canvas');c.width=VV.ew;c.height=VV.eh;
+    ring.push({c:c,x:c.getContext('2d'),t:-1});
+  }
+  ringW=0;
+}
+function ringClear(){ring.forEach(s=>s.t=-1);ringW=0;}
+function ringPush(t){
+  if(!ring.length||!VV.ew)return;
+  const s=ring[ringW%RB];
+  s.x.drawImage(vid,0,0,VV.ew,VV.eh);
+  s.t=t;ringW++;
+}
+function ringGet(t){
+  let best=null,bd=1e9;
+  for(const s of ring){
+    if(s.t<0)continue;
+    const d=Math.abs(s.t-t);
+    if(d<bd){bd=d;best=s;}
+  }
+  return best;
+}
+function drawStereo(){
+  if(!ringW)return;
+  const cur=ring[(ringW-1)%RB];
+  if(cur.t<0)return;
+  const old=ringGet(cur.t-VV.delay/1000)||cur;
+  /* older frame = left eye if the camera moved right */
+  let L=VV.camRight?old:cur,R=VV.camRight?cur:old;
+  if(!VV.parallel){const t=L;L=R;R=t;}
+  vctx.drawImage(L.c,0,0);
+  vctx.drawImage(R.c,VV.ew,0);
+}
+function startVLoop(){
+  stopVLoop();
+  const gen=++VV.gen;VV.on=true;
+  const useRv='requestVideoFrameCallback' in HTMLVideoElement.prototype;
+  if(useRv){
+    const cb=(now,meta)=>{
+      if(gen!==VV.gen)return;
+      ringPush(meta.mediaTime);
+      vid.requestVideoFrameCallback(cb);
+    };
+    vid.requestVideoFrameCallback(cb);
+  }
+  let lastT=-1;
+  const draw=()=>{
+    if(gen!==VV.gen)return;
+    if(!useRv&&vid.readyState>=2&&vid.currentTime!==lastT){lastT=vid.currentTime;ringPush(lastT);}
+    drawStereo();
+    requestAnimationFrame(draw);
+  };
+  draw();
+}
+function stopVLoop(){VV.gen++;VV.on=false;}
+
+function openVideo(f){
+  if(!f)return;
+  if(VV.url){try{URL.revokeObjectURL(VV.url)}catch(e){}}
+  VV.url=URL.createObjectURL(f);
+  VV.item=null;VV.blob=null;VV.rendered=false;VV.dirty=true;VV.busy=false;
+  vid.muted=true;vid.loop=true;
+  vid.onloadedmetadata=()=>{
+    const vw=vid.videoWidth,vh=vid.videoHeight;
+    if(!vw||!vh){toast('Could not read this video');return;}
+    const sc=Math.min(1,800/Math.max(vw,vh));
+    VV.ew=Math.max(2,Math.round(vw*sc/2)*2);
+    VV.eh=Math.max(2,Math.round(vh*sc/2)*2);
+    vout.width=VV.ew*2;vout.height=VV.eh;
+    ringInit();
+    $('vviewer').classList.remove('hide');
+    $('vviewer').style.display='block';
+    $('vprog').style.display='none';
+    setBtn($('vsave'),'idle');
+    $('vplay').textContent='Pause';
+    vid.play().catch(()=>{});
+    startVLoop();
+  };
+  vid.onerror=()=>toast('Could not open this video');
+  vid.src=VV.url;
+}
+$('vfile').onchange=e=>{const f=e.target.files[0];e.target.value='';openVideo(f);};
+$('vrec').onchange=e=>{const f=e.target.files[0];e.target.value='';openVideo(f);};
+
+function vChanged(){
+  VV.dirty=true;
+  setBtn($('vsave'),'idle');
+}
+function vSegs(){
+  $('dRight').classList.toggle('on',VV.camRight);
+  $('dLeft').classList.toggle('on',!VV.camRight);
+  $('vPar').classList.toggle('on',VV.parallel);
+  $('vCross').classList.toggle('on',!VV.parallel);
+}
+$('dRight').onclick=()=>{VV.camRight=true;vSegs();vChanged()};
+$('dLeft').onclick=()=>{VV.camRight=false;vSegs();vChanged()};
+$('vPar').onclick=()=>{VV.parallel=true;vSegs();vChanged()};
+$('vCross').onclick=()=>{VV.parallel=false;vSegs();vChanged()};
+$('vdelay').oninput=()=>{VV.delay=+$('vdelay').value;$('vdv').textContent=VV.delay;vChanged()};
+$('vplay').onclick=()=>{
+  if(vid.paused){vid.play().catch(()=>{});$('vplay').textContent='Pause';}
+  else{vid.pause();$('vplay').textContent='Play';}
+};
+vout.onclick=()=>{if(!VV.busy)$('vviewer').classList.toggle('hide');};
+
+function pickMime(){
+  const c=[
+    ['video/mp4;codecs=avc1','mp4','video/mp4'],
+    ['video/mp4','mp4','video/mp4'],
+    ['video/webm;codecs=vp8','webm','video/webm'],
+    ['video/webm;codecs=vp9','webm','video/webm'],
+    ['video/webm','webm','video/webm']
+  ];
+  if(window.MediaRecorder){
+    for(const x of c){if(MediaRecorder.isTypeSupported(x[0]))return {type:x[0],ext:x[1],base:x[2]};}
+  }
+  return {type:'',ext:'webm',base:'video/webm'};
+}
+function blobB64(b){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(b);
+  });
+}
+async function writeBlob(path,blob){
+  const fs=FS(),CH=3*1024*1024;
+  let first=true;
+  for(let o=0;o<blob.size;o+=CH){
+    const b64=await blobB64(blob.slice(o,o+CH));
+    if(first){await fs.writeFile({path:path,directory:'DATA',data:b64,recursive:true});first=false;}
+    else{await fs.appendFile({path:path,directory:'DATA',data:b64});}
+  }
+}
+function showProg(on,p){
+  $('vprog').style.display=on?'flex':'none';
+  if(on){
+    const v=Math.max(0,Math.min(100,Math.round((p||0)*100)));
+    $('vptxt').textContent='Rendering 3D video... '+v+'%';
+    $('vpfill').style.width=v+'%';
+  }
+}
+function seekZero(){
+  return new Promise(res=>{
+    if(vid.currentTime<0.02){res();return;}
+    const h=()=>{vid.removeEventListener('seeked',h);res();};
+    vid.addEventListener('seeked',h);
+    setTimeout(h,800);
+    vid.currentTime=0;
+  });
+}
+function saveBlobWeb(blob,ext){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='stereo3d_'+Date.now()+'.'+ext;a.click();
+}
+
+/* plays the clip once from the start while recording the 3D canvas */
+async function renderVideo(){
+  if(VV.rendered&&!VV.dirty)return VV.item||{web:true};
+  if(VV.busy)return null;
+  if(!window.MediaRecorder||!vout.captureStream){toast('Video rendering is not supported here');return null;}
+  VV.busy=true;
+  showProg(true,0);
+  const mt=pickMime();
+  let cancelled=false,poster=null,prog=null;
+  try{
+    const old=VV.item;
+    vid.pause();vid.loop=false;
+    await seekZero();
+    ringClear();
+    const stream=vout.captureStream(30);
+    const opts={videoBitsPerSecond:8000000};
+    if(mt.type)opts.mimeType=mt.type;
+    const rec=new MediaRecorder(stream,opts);
+    const chunks=[];
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+    const finished=new Promise(res=>{
+      vid.onended=()=>res();
+      VV.cancel=()=>{cancelled=true;res();};
+    });
+    rec.start(500);
+    await vid.play();
+    prog=setInterval(()=>{
+      const d=vid.duration||0;
+      showProg(true,d?vid.currentTime/d:0);
+      if(!poster&&vid.currentTime>0.2){poster=vout.toDataURL('image/jpeg',0.8).split(',')[1];}
+    },200);
+    await finished;
+    clearInterval(prog);prog=null;
+    vid.onended=null;VV.cancel=null;
+    if(!poster)poster=vout.toDataURL('image/jpeg',0.8).split(',')[1];
+    await new Promise(r=>{rec.onstop=r;rec.stop();});
+    /* back to looping preview */
+    vid.loop=true;
+    await seekZero();
+    ringClear();
+    vid.play().catch(()=>{});
+    $('vplay').textContent='Pause';
+    if(cancelled){VV.busy=false;showProg(false);return null;}
+    const blob=new Blob(chunks,{type:mt.base});
+    VV.blob=blob;
+    let result={web:true};
+    if(FS()){
+      if(old){await removeItem(old);}
+      const now=Date.now();
+      const it={id:now,type:'video',file:'library/v_'+now+'.'+mt.ext,poster:'library/v_'+now+'.jpg',
+        ext:mt.ext,mime:mt.base,ts:now,gallery:null,ar:VV.ew/VV.eh,v:now};
+      await writeBlob(it.file,blob);
+      await FS().writeFile({path:it.poster,directory:'DATA',data:poster,recursive:true});
+      lib.unshift(it);
+      await saveIndex();
+      VV.item=it;result=it;
+    }
+    VV.rendered=true;VV.dirty=false;
+    VV.busy=false;showProg(false);
+    return result;
+  }catch(e){
+    if(prog)clearInterval(prog);
+    vid.onended=null;VV.cancel=null;vid.loop=true;
+    VV.busy=false;showProg(false);
+    vid.play().catch(()=>{});
+    toast('Render failed: '+(e&&e.message?e.message:e));
+    return null;
+  }
+}
+$('vpcancel').onclick=()=>{if(VV.cancel)VV.cancel();};
+
+$('vsave').onclick=async()=>{
+  const btn=$('vsave');
+  if(VV.busy)return;
+  try{
+    const it=await renderVideo();
+    if(!it)return;
+    setBtn(btn,'busy');
+    if(it.web){
+      saveBlobWeb(VV.blob,pickMime().ext);
+    }else{
+      await galleryVideo(it);
+    }
+    setBtn(btn,'ok');
+    toast('Saved to gallery');
+    renderLib();
+  }catch(e){
+    setBtn(btn,'idle');
+    toast('Save failed: '+(e&&e.message?e.message:e));
+  }
+};
+$('vvshare').onclick=async()=>{
+  if(VV.busy)return;
+  try{
+    const it=await renderVideo();
+    if(!it)return;
+    if(it.web){saveBlobWeb(VV.blob,pickMime().ext);}
+    else{await shareVideoItem(it);}
+  }catch(e){}
+};
+function closeVideoView(){
+  if(VV.busy)return;
+  if(!VV.rendered&&!confirm('Close without saving this video? Tap Save video first if you want to keep it.'))return;
+  stopVLoop();
+  vid.pause();
+  vid.removeAttribute('src');
+  vid.load();
+  if(VV.url){try{URL.revokeObjectURL(VV.url)}catch(e){}VV.url=null;}
+  $('vviewer').style.display='none';
+  const kept=VV.rendered;
+  VV.item=null;VV.blob=null;VV.rendered=false;
+  renderLib();
+  if(kept)toast('Kept in your Library');
+}
+$('vvclose').onclick=closeVideoView;
+$('vdone').onclick=closeVideoView;
+
 /* ---------- library detail ---------- */
 async function openDetail(it,src){
   D.item=it;
-  $('dimg').src=src;
+  const isV=it.type==='video';
+  $('dimg').style.display=isV?'none':'block';
+  $('dvid').style.display=isV?'block':'none';
   $('detail').classList.remove('hide');
   $('detail').style.display='block';
   setBtn($('dsave'),it.gallery?'ok':'idle');
+  if(isV){
+    try{
+      $('dvid').src=await itemSrc(it,'file');
+      $('dvid').play().catch(()=>{});
+    }catch(e){}
+  }else{
+    $('dimg').src=src;
+  }
 }
 function closeDetail(){
   $('detail').style.display='none';
   $('dimg').src='';
+  const dv=$('dvid');
+  dv.pause();dv.removeAttribute('src');dv.load();
   D.item=null;
 }
 $('dclose').onclick=closeDetail;
 $('dimg').onclick=()=>$('detail').classList.toggle('hide');
+$('dvid').onclick=()=>$('detail').classList.toggle('hide');
 async function detailB64(){
   const r=await FS().readFile({path:D.item.file,directory:'DATA'});
   return r.data;
 }
 $('dshare').onclick=async()=>{
-  try{await shareB64(await detailB64());}catch(e){}
+  const it=D.item;
+  if(!it)return;
+  try{
+    if(it.type==='video')await shareVideoItem(it);
+    else await shareB64(await detailB64());
+  }catch(e){}
 };
 $('dsave').onclick=async()=>{
   const btn=$('dsave'),it=D.item;
   if(!it)return;
   setBtn(btn,'busy');
   try{
-    await toGallery(it,await detailB64());
+    if(it.type==='video')await galleryVideo(it);
+    else await toGallery(it,await detailB64());
     setBtn(btn,'ok');
     toast('Saved to gallery');
     renderLib();
@@ -450,14 +829,8 @@ $('dsave').onclick=async()=>{
 $('ddel').onclick=async()=>{
   const it=D.item;
   if(!it)return;
-  if(!confirm('Delete this picture from the app and from your gallery?'))return;
-  try{
-    if(it.gallery&&GAL()){await GAL().remove({uri:it.gallery});}
-  }catch(e){}
-  try{await FS().deleteFile({path:it.file,directory:'DATA'});}catch(e){}
-  lib=lib.filter(x=>x.id!==it.id);
-  if(photoItem&&photoItem.id===it.id)photoItem=null;
-  try{await saveIndex();}catch(e){}
+  if(!confirm('Delete this from the app and from your gallery?'))return;
+  await removeItem(it);
   closeDetail();
   renderLib();
   toast('Deleted');
