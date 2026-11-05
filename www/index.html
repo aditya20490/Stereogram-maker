@@ -17,7 +17,7 @@ header h1{font-size:19px;margin:0;flex:1;letter-spacing:.3px}
 .view{display:none;flex:1;min-height:0;position:relative}
 .view.on{display:flex}
 nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom)}
-.tab{flex:1;padding:10px 0 8px;background:none;border:0;color:var(--mut);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab{flex:1;padding:10px 0 8px;background:none;border:0;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--acc)}
 .btn{border:0;border-radius:14px;padding:14px 22px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc2));display:inline-block}
@@ -40,9 +40,17 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 .hero svg{width:60px;height:60px;stroke:var(--acc);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 #v-photo h2,#v-video h2{margin:6px 0 0;font-size:22px}
 #v-photo p,#v-video p{margin:0;color:var(--mut);font-size:14px;max-width:320px;line-height:1.45}
-#pstatus{color:#9cc2ff;font-size:14px;min-height:20px}
-#pbar{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
-#pfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
+#pstatus,#sgstatus{color:#9cc2ff;font-size:14px;min-height:20px}
+#pbar,#sgbar{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
+#pfill,#sgfill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .2s}
+/* stereogram start screen */
+#v-sg{flex-direction:column;overflow-y:auto;padding:20px;-webkit-overflow-scrolling:touch}
+.sgwrap{margin:auto;width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.sgwrap h2{margin:0;font-size:22px}
+.sgwrap p{margin:0;color:var(--mut);font-size:14px;line-height:1.45}
+.sgbox{width:100%;display:flex;flex-direction:column;gap:12px;align-items:center}
+#sgtext{width:100%;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:18px;padding:12px 14px;font-family:inherit;resize:none;user-select:text;-webkit-user-select:text;outline:none}
+#sgtext:focus{border-color:var(--acc)}
 /* library */
 #v-lib{flex-direction:column;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
 #libHead{font-size:13px;color:var(--mut);margin:0 2px 10px}
@@ -63,6 +71,7 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 .seg button.on{background:var(--acc)}
 .sl{width:90%;max-width:420px;font-size:13px;color:#cfd6e8;text-align:center}
 .sl input{width:100%}
+.sgctl{display:none;flex-direction:column;gap:8px;align-items:center;width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .row .btn{padding:11px 20px;font-size:15px;min-width:130px}
 .tip{font-size:12px;color:#aab3c9;text-align:center}
@@ -116,6 +125,26 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
     <label class="btn alt">Record Video<input type="file" id="vrec" accept="video/*" capture="environment" hidden></label>
   </section>
 
+  <section class="view" id="v-sg">
+    <div class="sgwrap">
+      <h2>Stereogram Maker</h2>
+      <p>Make a real Magic Eye style stereogram with a secret hidden inside. It only shows up when you view it the stereogram way.</p>
+      <div class="seg" id="sgModeSeg" style="border-color:var(--line)">
+        <button id="sgModeT" class="on">Hidden text</button><button id="sgModeP">Hidden photo</button>
+      </div>
+      <div class="sgbox" id="sgTextBox">
+        <textarea id="sgtext" rows="3" maxlength="60" placeholder="Type your secret message. New line = new row."></textarea>
+        <button class="btn" id="sgcreate">Create Stereogram</button>
+      </div>
+      <div class="sgbox" id="sgPhotoBox" style="display:none">
+        <p>Pick a photo. The main subject (the thing closest to the camera) gets hidden inside the stereogram as a 3D shape.</p>
+        <div id="sgbar"><div id="sgfill"></div></div>
+        <div id="sgstatus"></div>
+        <label class="btn">Choose Photo<input type="file" id="sgfile" accept="image/*" hidden></label>
+      </div>
+    </div>
+  </section>
+
   <section class="view" id="v-lib">
     <div id="libHead"></div>
     <div id="libGrid"></div>
@@ -126,6 +155,7 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
     <button class="tab on" data-t="cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera 3D</button>
     <button class="tab" data-t="photo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>Photo 3D</button>
     <button class="tab" data-t="video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="3"/><path d="M15.5 10l6-3v10l-6-3z"/></svg>Video 3D</button>
+    <button class="tab" data-t="sg"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1"/><circle cx="13" cy="8" r="1"/><circle cx="17" cy="11" r="1"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="15" r="1"/></svg>Stereogram</button>
     <button class="tab" data-t="lib"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Library</button>
   </nav>
 </div>
@@ -133,13 +163,20 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 <!-- hidden source video for Video 3D -->
 <video id="vid" playsinline muted style="position:fixed;left:-9999px;top:0;width:2px;height:2px"></video>
 
-<!-- viewer for a fresh photo / camera result -->
+<!-- viewer for a fresh photo / camera / stereogram result -->
 <div class="full" id="viewer">
   <canvas id="out"></canvas>
   <div class="top ui"><button class="pill" id="vshare">Share</button><button class="xbtn" id="vclose">&#10005;</button></div>
   <div class="bot ui">
-    <div class="tip">Rotate to landscape. Tap the picture to hide or show controls.</div>
+    <div class="tip" id="vtip">Rotate to landscape. Tap the picture to hide or show controls.</div>
     <div class="sl" id="strRow">3D strength: <b id="sv">3</b>%<input type="range" id="str" min="0.5" max="8" step="0.5" value="3"></div>
+    <div class="sgctl" id="sgRow">
+      <div class="sl">Depth: <b id="sgdv">22</b><input type="range" id="sgdep" min="8" max="40" step="1" value="22"></div>
+      <div class="sl">Pattern size: <b id="sgpv">20</b><input type="range" id="sgper" min="12" max="30" step="1" value="20"></div>
+      <div class="sl">Dot size: <b id="sgdsv">2</b><input type="range" id="sgdot" min="1" max="4" step="1" value="2"></div>
+      <div class="sl" id="cutRow" style="display:none">Subject cutoff: <b id="sgcv">0</b><input type="range" id="sgcut" min="-40" max="40" step="1" value="0"></div>
+      <div class="seg" id="palSeg"></div>
+    </div>
     <div class="seg"><button id="mPar" class="on">Parallel</button><button id="mCross">Cross-eye</button></div>
     <div class="row"><button class="btn" id="save">Save to gallery</button><button class="btn alt" id="retake">Done</button></div>
   </div>
@@ -185,6 +222,7 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
       <li>Look far away, like at a mountain peak. Don't focus on the screen.</li>
       <li>Hold the phone in front of you and slowly shift your focus closer to the screen.</li>
       <li>At one point it clicks and the picture pops into 3D.</li>
+      <li>Guide dot: each picture has a white dot at the top. When the two dots merge into one, the pictures are locked together.</li>
     </ol>
     <h3>Camera 3D tips</h3>
     <ol>
@@ -198,6 +236,15 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
       <li>Tell the app which way you moved (right or left). If it looks inside out, switch it.</li>
       <li>Use the 3D strength slider. Faster movement needs a smaller gap.</li>
       <li>Tap Save video to render it. This takes as long as the video itself.</li>
+    </ol>
+    <h3>Stereogram tips</h3>
+    <ol>
+      <li>Type a message or pick a photo. The hidden shape is invisible in the normal view.</li>
+      <li>Two white dots are at the top. Look far away, past the screen, until the two dots become three, then slowly bring your focus so the middle one stays. Keep your eyes relaxed and the hidden shape appears.</li>
+      <li>Hold the phone about 30-40 cm from your face, in landscape.</li>
+      <li>If it looks like a hole instead of raised, switch Parallel / Cross-eye.</li>
+      <li>Hard to lock on? Make Dots bigger, or the Pattern size smaller. Too much pop is tiring, so lower Depth.</li>
+      <li>For Hidden photo, use Subject cutoff to grow or shrink the hidden subject.</li>
     </ol>
     <h3>Library</h3>
     <ol>
@@ -213,15 +260,29 @@ nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding
 <script>
 const $=id=>document.getElementById(id);
 const out=$('out');
-const V={parallel:true,render:null,photo:false,item:null,dirty:false};
+const V={parallel:true,render:null,kind:'cam',item:null,dirty:false};
 const D={item:null};
-let photoItem=null;
+const keepItem={photo:null,sg:null};
 const MODEL_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
 const MUXER_URL='https://cdn.jsdelivr.net/npm/mp4-muxer@5/+esm';
 const cap=()=>(window.Capacitor&&window.Capacitor.Plugins)||null;
 const FS=()=>{const c=cap();return c&&c.Filesystem};
 const GAL=()=>{const c=cap();return c&&c.StereoGallery};
 const SHARE=()=>{const c=cap();return c&&c.Share};
+
+/* ---------- guide dots ---------- */
+function dotAt(ctx,cx,y,r){
+  ctx.beginPath();ctx.arc(cx,y,r,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();
+  ctx.lineWidth=Math.max(1.5,r*0.4);ctx.strokeStyle='#000';ctx.stroke();
+}
+function dotMetrics(h){const r=Math.max(4,Math.round(h*0.008));return {r:r,y:Math.round(h*0.035)+r};}
+/* one dot at the top center of each eye image */
+function addPairDots(ctx,hw,h){
+  const m=dotMetrics(h);
+  dotAt(ctx,hw/2,m.y,m.r);
+  dotAt(ctx,hw*1.5,m.y,m.r);
+}
 
 /* ---------- toast ---------- */
 let toastT=null;
@@ -282,15 +343,20 @@ async function renderLib(){
     d.className='thumb';
     d.style.aspectRatio=String(it.ar||1.5);
     d.style.backgroundImage='url("'+srcs[i]+'")';
+    if(it.single)d.style.backgroundSize='cover';
     const tags=[];
     if(it.type==='video')tags.push('\u25B6 Video');
+    if(it.single)tags.push('Stereogram');
     if(it.gallery)tags.push('Saved');
     if(tags.length){const b=document.createElement('i');b.textContent=tags.join(' \u00B7 ');d.appendChild(b);}
     d.onclick=()=>openDetail(it,srcs[i]);
     grid.appendChild(d);
   });
 }
-function currentB64(){return out.toDataURL('image/jpeg',0.92).split(',')[1];}
+function imgExt(){return V.kind==='sg'?'png':'jpg';}
+function imgB64(){
+  return (V.kind==='sg'?out.toDataURL('image/png'):out.toDataURL('image/jpeg',0.92)).split(',')[1];
+}
 
 /* remove an item everywhere (library files, gallery copy, index) */
 async function removeItem(it){
@@ -298,7 +364,8 @@ async function removeItem(it){
   try{await FS().deleteFile({path:it.file,directory:'DATA'});}catch(e){}
   if(it.poster){try{await FS().deleteFile({path:it.poster,directory:'DATA'});}catch(e){}}
   lib=lib.filter(x=>x.id!==it.id);
-  if(photoItem&&photoItem.id===it.id)photoItem=null;
+  if(keepItem.photo&&keepItem.photo.id===it.id)keepItem.photo=null;
+  if(keepItem.sg&&keepItem.sg.id===it.id)keepItem.sg=null;
   try{await saveIndex();}catch(e){}
 }
 
@@ -308,16 +375,19 @@ async function commitLib(){
   if(!fs)return V.item;
   if(V.item&&!V.dirty)return V.item;
   const now=Date.now();
+  const sg=V.kind==='sg';
   if(!V.item){
-    V.item={id:now,file:'library/s_'+now+'.jpg',ts:now,gallery:null,ar:out.width/2/out.height,v:now};
+    V.item=sg
+      ?{id:now,type:'image',single:true,ext:'png',mime:'image/png',file:'library/s_'+now+'.png',ts:now,gallery:null,ar:out.width/out.height,v:now}
+      :{id:now,file:'library/s_'+now+'.jpg',ts:now,gallery:null,ar:out.width/2/out.height,v:now};
     lib.unshift(V.item);
   }
   V.item.v=now;
-  V.item.ar=out.width/2/out.height;
-  await fs.writeFile({path:V.item.file,directory:'DATA',data:currentB64(),recursive:true});
+  V.item.ar=sg?out.width/out.height:out.width/2/out.height;
+  await fs.writeFile({path:V.item.file,directory:'DATA',data:imgB64(),recursive:true});
   await saveIndex();
   V.dirty=false;
-  if(V.photo)photoItem=V.item;
+  if(V.kind!=='cam')keepItem[V.kind]=V.item;
   return V.item;
 }
 
@@ -326,14 +396,15 @@ async function toGallery(item,b64){
   const g=GAL();
   if(!g){
     const a=document.createElement('a');
-    a.href='data:image/jpeg;base64,'+b64;a.download='stereo3d_'+Date.now()+'.jpg';a.click();
+    a.href='data:image/'+(imgExt()==='png'?'png':'jpeg')+';base64,'+b64;a.download='stereo3d_'+Date.now()+'.'+imgExt();a.click();
     return;
   }
   if(item&&item.gallery){try{await g.remove({uri:item.gallery});}catch(e){}}
   const r=await g.save({data:b64,name:'stereo3d_'+(item?item.id:Date.now())+'.jpg'});
   if(item){item.gallery=r.uri;await saveIndex();}
 }
-async function galleryVideo(item){
+/* videos and PNG stereograms: copy the stored file into the gallery */
+async function galleryFile(item){
   const g=GAL();
   if(item.gallery){try{await g.remove({uri:item.gallery});}catch(e){}}
   const uri=await fileUri(item.file);
@@ -341,14 +412,15 @@ async function galleryVideo(item){
   item.gallery=r.uri;
   await saveIndex();
 }
-async function shareB64(b64){
+async function shareB64(b64,ext){
+  ext=ext||'jpg';
   const fs=FS(),sh=SHARE();
   if(fs&&sh){
-    const r=await fs.writeFile({path:'share_'+Date.now()+'.jpg',data:b64,directory:'CACHE'});
+    const r=await fs.writeFile({path:'share_'+Date.now()+'.'+ext,data:b64,directory:'CACHE'});
     await sh.share({title:'Stereo 3D',files:[r.uri]});
   }else{
     const a=document.createElement('a');
-    a.href='data:image/jpeg;base64,'+b64;a.download='stereo3d_'+Date.now()+'.jpg';a.click();
+    a.href='data:image/'+(ext==='png'?'png':'jpeg')+';base64,'+b64;a.download='stereo3d_'+Date.now()+'.'+ext;a.click();
   }
 }
 async function shareVideoItem(it){
@@ -425,7 +497,7 @@ $('shutter').onclick=async()=>{
   }else{
     shots.push(grab());
     ghost.style.display='none';
-    openViewer(renderCam,false);
+    openViewer(renderCam,'cam');
   }
 };
 function renderCam(){
@@ -435,17 +507,23 @@ function renderCam(){
   out.width=L.width*2;out.height=L.height;
   const x=out.getContext('2d');
   x.drawImage(L,0,0);x.drawImage(R,L.width,0);
+  addPairDots(x,L.width,L.height);
 }
 
-/* ---------- result viewer (photo + camera) ---------- */
+/* ---------- result viewer (photo + camera + stereogram) ---------- */
 function setSeg(){
   $('mPar').classList.toggle('on',V.parallel);
   $('mCross').classList.toggle('on',!V.parallel);
 }
-function openViewer(fn,isPhoto){
-  V.render=fn;V.photo=isPhoto;V.dirty=true;
-  V.item=isPhoto?photoItem:null;
-  $('strRow').style.display=isPhoto?'block':'none';
+function openViewer(fn,kind){
+  V.render=fn;V.kind=kind;V.dirty=true;
+  V.item=kind==='cam'?null:keepItem[kind];
+  $('strRow').style.display=kind==='photo'?'block':'none';
+  $('sgRow').style.display=kind==='sg'?'flex':'none';
+  $('cutRow').style.display=(kind==='sg'&&SG.mode==='photo')?'block':'none';
+  $('vtip').textContent=kind==='sg'
+    ?'Rotate to landscape. Merge the two top dots into one, then relax your eyes. Tap the picture to hide controls.'
+    :'Rotate to landscape. Tap the picture to hide or show controls.';
   $('viewer').classList.remove('hide');
   $('viewer').style.display='block';
   setBtn($('save'),'idle');
@@ -454,7 +532,7 @@ function openViewer(fn,isPhoto){
 async function closeViewer(){
   try{await commitLib();}catch(e){}
   $('viewer').style.display='none';
-  if(!V.photo)resetCam();
+  if(V.kind==='cam')resetCam();
   renderLib();
   toast('Kept in your Library');
 }
@@ -475,7 +553,8 @@ $('save').onclick=async()=>{
   setBtn(btn,'busy');
   try{
     const item=await commitLib();
-    await toGallery(item,currentB64());
+    if(item&&item.single)await galleryFile(item);
+    else await toGallery(item,imgB64());
     setBtn(btn,'ok');
     toast('Saved to gallery');
   }catch(e){
@@ -486,7 +565,7 @@ $('save').onclick=async()=>{
 $('vshare').onclick=async()=>{
   try{
     await commitLib();
-    await shareB64(currentB64());
+    await shareB64(imgB64(),imgExt());
   }catch(e){}
 };
 
@@ -530,6 +609,7 @@ function drawStereo(){
   if(!VV.parallel){const t=L;L=R;R=t;}
   vctx.drawImage(L.c,0,0);
   vctx.drawImage(R.c,VV.ew,0);
+  addPairDots(vctx,VV.ew,VV.eh);
 }
 function startVLoop(){
   stopVLoop();
@@ -793,7 +873,7 @@ $('vsave').onclick=async()=>{
     if(it.web){
       saveBlobWeb(VV.blob,VV.ext);
     }else{
-      await galleryVideo(it);
+      await galleryFile(it);
     }
     setBtn(btn,'ok');
     toast('Saved to gallery');
@@ -866,7 +946,7 @@ $('dshare').onclick=async()=>{
   if(!it)return;
   try{
     if(it.type==='video')await shareVideoItem(it);
-    else await shareB64(await detailB64());
+    else await shareB64(await detailB64(),it.ext||'jpg');
   }catch(e){}
 };
 $('dsave').onclick=async()=>{
@@ -874,7 +954,7 @@ $('dsave').onclick=async()=>{
   if(!it)return;
   setBtn(btn,'busy');
   try{
-    if(it.type==='video')await galleryVideo(it);
+    if(it.type==='video'||it.single)await galleryFile(it);
     else await toGallery(it,await detailB64());
     setBtn(btn,'ok');
     toast('Saved to gallery');
@@ -894,64 +974,73 @@ $('ddel').onclick=async()=>{
   toast('Deleted');
 };
 
-/* ---------- photo to 3D ---------- */
+/* ---------- AI depth (shared by Photo 3D and Stereogram) ---------- */
 let estimator=null,srcData=null,depth=null,W=0,H=0;
 const pstatus=$('pstatus'),pbar=$('pbar'),pfill=$('pfill');
-async function getEstimator(){
+const PUI={status:pstatus,bar:pbar,fill:pfill};
+const SUI={status:$('sgstatus'),bar:$('sgbar'),fill:$('sgfill')};
+async function getEstimator(ui){
   if(estimator)return estimator;
-  pstatus.textContent='Loading AI depth model...';
+  ui.status.textContent='Loading AI depth model...';
   const {pipeline}=await import(MODEL_URL);
   estimator=await pipeline('depth-estimation','onnx-community/depth-anything-v2-small',{
     progress_callback:p=>{
       if(p.status==='progress'){
         const v=Math.round(p.progress||0);
-        pstatus.textContent='Downloading AI model: '+v+'%';
-        pfill.style.width=v+'%';
+        ui.status.textContent='Downloading AI model: '+v+'%';
+        ui.fill.style.width=v+'%';
       }
     }
   });
   return estimator;
 }
+async function estimateDepth(f,ui){
+  ui.bar.style.display='block';ui.fill.style.width='5%';
+  ui.status.textContent='Reading photo...';
+  const bmp=await createImageBitmap(f);
+  const sc=Math.min(1,900/bmp.width);
+  const w=Math.round(bmp.width*sc),h=Math.round(bmp.height*sc);
+  const c=document.createElement('canvas');
+  c.width=w;c.height=h;
+  const cx=c.getContext('2d');
+  cx.drawImage(bmp,0,0,w,h);
+  const sd=cx.getImageData(0,0,w,h);
+  const est=await getEstimator(ui);
+  ui.fill.style.width='100%';
+  ui.status.textContent='Working out depth... (10-30 sec)';
+  const res=await est(c.toDataURL('image/jpeg',0.9));
+  const d=res.depth;
+  const ch=d.channels||1;
+  const dep=new Uint8Array(w*h);
+  for(let y=0;y<h;y++){
+    const sy=Math.min(d.height-1,Math.floor(y*d.height/h));
+    for(let x=0;x<w;x++){
+      const sx=Math.min(d.width-1,Math.floor(x*d.width/w));
+      dep[y*w+x]=d.data[(sy*d.width+sx)*ch];
+    }
+  }
+  ui.bar.style.display='none';
+  return {W:w,H:h,srcData:sd,depth:dep};
+}
+
+/* ---------- photo to 3D ---------- */
 $('file').onchange=async e=>{
   const f=e.target.files[0];
+  e.target.value='';
   if(!f)return;
-  pbar.style.display='block';pfill.style.width='5%';
   try{
-    pstatus.textContent='Reading photo...';
-    const bmp=await createImageBitmap(f);
-    const sc=Math.min(1,900/bmp.width);
-    W=Math.round(bmp.width*sc);H=Math.round(bmp.height*sc);
-    const c=document.createElement('canvas');
-    c.width=W;c.height=H;
-    const cx=c.getContext('2d');
-    cx.drawImage(bmp,0,0,W,H);
-    srcData=cx.getImageData(0,0,W,H);
-    const est=await getEstimator();
-    pfill.style.width='100%';
-    pstatus.textContent='Working out depth... (10-30 sec)';
-    const res=await est(c.toDataURL('image/jpeg',0.9));
-    const d=res.depth;
-    const ch=d.channels||1;
-    depth=new Uint8Array(W*H);
-    for(let y=0;y<H;y++){
-      const sy=Math.min(d.height-1,Math.floor(y*d.height/H));
-      for(let x=0;x<W;x++){
-        const sx=Math.min(d.width-1,Math.floor(x*d.width/W));
-        depth[y*W+x]=d.data[(sy*d.width+sx)*ch];
-      }
-    }
+    const r=await estimateDepth(f,PUI);
+    srcData=r.srcData;depth=r.depth;W=r.W;H=r.H;
     pstatus.textContent='Done!';
-    pbar.style.display='none';
     $('again').style.display='inline-block';
-    photoItem=null;
-    openViewer(renderPhoto,true);
+    keepItem.photo=null;
+    openViewer(renderPhoto,'photo');
   }catch(err){
     pbar.style.display='none';
     pstatus.textContent='Error: '+err.message+' (first run needs internet to download the AI model)';
   }
-  e.target.value='';
 };
-$('again').onclick=()=>openViewer(renderPhoto,true);
+$('again').onclick=()=>openViewer(renderPhoto,'photo');
 function renderPhoto(){
   if(!srcData||!depth)return;
   const s=(+$('str').value/100)*W;
@@ -973,6 +1062,356 @@ function renderPhoto(){
     }
   }
   ctx.putImageData(img,0,0);
+  addPairDots(ctx,W,H);
+}
+
+/* ================= Stereogram maker =================
+   Real single-image random-dot stereogram (SIRDS) engine.
+   Algorithm: Thimbleby, Inglis & Witten (1994), "same-constraints" method.
+   For each pixel with depth z (0 = far, 1 = near) the two eye rays must land on
+   two pixels that get the SAME colour. Their distance (the separation) is
+       s = (1 - mu*z) * E / (2 - mu*z)
+   E  = distance between the eyes in pixels (here "Pattern size" % of width)
+   mu = depth of field (the "Depth" slider)
+   Hidden surfaces are removed so near shapes don't leak through. */
+const SGW=1920,SGH=1080;
+const SG={mode:'text',text:'',photo:null,photoId:0,zc:null,pal:0,luts:{},noise:null,noiseKey:''};
+const PALS=[
+  {n:'Rainbow',c:[[255,59,48],[255,149,0],[255,214,10],[52,199,89],[10,132,255],[191,90,242],[255,45,146],[18,18,22],[18,18,22]]},
+  {n:'Ocean',c:[[0,119,182],[0,180,216],[144,224,239],[3,4,94],[72,202,228],[230,250,255],[2,20,60]]},
+  {n:'Fire',c:[[255,59,0],[255,149,0],[255,214,10],[200,0,0],[255,240,170],[20,8,8],[20,8,8]]},
+  {n:'Forest',c:[[34,139,34],[0,100,60],[144,238,144],[173,255,47],[0,150,136],[10,40,20],[10,40,20]]}
+];
+(function(){
+  const seg=$('palSeg');
+  PALS.forEach((p,i)=>{
+    const b=document.createElement('button');
+    b.textContent=p.n;b.dataset.i=i;
+    if(i===SG.pal)b.className='on';
+    b.onclick=()=>{
+      SG.pal=i;
+      seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.i===i));
+      changed();
+    };
+    seg.appendChild(b);
+  });
+})();
+
+function setSgMode(m){
+  SG.mode=m;
+  $('sgModeT').classList.toggle('on',m==='text');
+  $('sgModeP').classList.toggle('on',m==='photo');
+  $('sgTextBox').style.display=m==='text'?'flex':'none';
+  $('sgPhotoBox').style.display=m==='photo'?'flex':'none';
+}
+$('sgModeT').onclick=()=>setSgMode('text');
+$('sgModeP').onclick=()=>setSgMode('photo');
+$('sgcreate').onclick=()=>{
+  const t=$('sgtext').value.replace(/\r/g,'');
+  if(!t.trim()){toast('Type a message first');return;}
+  SG.text=t.trim();SG.mode='text';
+  SG.noise=null;
+  keepItem.sg=null;
+  openViewer(renderSG,'sg');
+};
+$('sgfile').onchange=async e=>{
+  const f=e.target.files[0];
+  e.target.value='';
+  if(!f)return;
+  try{
+    const r=await estimateDepth(f,SUI);
+    SG.photo={W:r.W,H:r.H,depth:r.depth};
+    SG.photoId++;SG.mode='photo';
+    SG.noise=null;
+    $('sgcut').value=0;$('sgcv').textContent='0';
+    SUI.status.textContent='Done!';
+    keepItem.sg=null;
+    openViewer(renderSG,'sg');
+  }catch(err){
+    SUI.bar.style.display='none';
+    SUI.status.textContent='Error: '+err.message+' (first run needs internet to download the AI model)';
+  }
+};
+
+let sgT=null;
+function sgSlide(){
+  V.dirty=true;
+  setBtn($('save'),'idle');
+  clearTimeout(sgT);
+  sgT=setTimeout(()=>{V.render&&V.render();},120);
+}
+$('sgdep').oninput=()=>{$('sgdv').textContent=$('sgdep').value;sgSlide()};
+$('sgper').oninput=()=>{$('sgpv').textContent=$('sgper').value;sgSlide()};
+$('sgdot').oninput=()=>{$('sgdsv').textContent=$('sgdot').value;sgSlide()};
+$('sgcut').oninput=()=>{$('sgcv').textContent=$('sgcut').value;sgSlide()};
+
+function grayToZ(c){
+  const w=c.width,h=c.height;
+  const d=c.getContext('2d').getImageData(0,0,w,h).data;
+  const z=new Float32Array(w*h);
+  for(let i=0;i<z.length;i++)z[i]=d[i*4]/255;
+  return z;
+}
+function softCopy(c,px){
+  const c2=document.createElement('canvas');c2.width=c.width;c2.height=c.height;
+  const x=c2.getContext('2d');
+  try{x.filter='blur('+px+'px)';}catch(e){}
+  x.drawImage(c,0,0);
+  return c2;
+}
+
+/* hidden text -> depth map (text near = 1, background far = 0) */
+function textZ(W,H){
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  const fam='"Arial Black",Roboto,system-ui,sans-serif';
+  const lh=1.15;
+  function fit(lines){
+    let size=Math.round(H*0.5);
+    for(;size>20;size-=4){
+      x.font='900 '+size+'px '+fam;
+      let mw=0;
+      for(const l of lines)mw=Math.max(mw,x.measureText(l).width);
+      if(mw<=W*0.8&&size*lh*lines.length<=H*0.72)break;
+    }
+    return size;
+  }
+  let lines;
+  if(SG.text.indexOf('\n')>=0){
+    lines=SG.text.split('\n').map(s=>s.trim()).filter(Boolean);
+  }else{
+    const words=SG.text.split(/\s+/).filter(Boolean);
+    let bestSize=-1;
+    for(let n=1;n<=3;n++){
+      if(n>words.length)break;
+      const target=SG.text.length/n;
+      const ls=[];let cur='';
+      for(const w of words){
+        if(cur&&(cur+' '+w).length>target&&ls.length<n-1){ls.push(cur);cur=w;}
+        else cur=cur?cur+' '+w:w;
+      }
+      ls.push(cur);
+      const s=fit(ls);
+      if(s>bestSize*1.12||bestSize<0){bestSize=s;lines=ls;}
+    }
+  }
+  const size=fit(lines);
+  x.font='900 '+size+'px '+fam;
+  x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#fff';x.strokeStyle='#fff';x.lineJoin='round';
+  x.lineWidth=size*0.06;
+  const top=H/2-(lines.length-1)*size*lh/2;
+  lines.forEach((l,i)=>{
+    const y=top+i*size*lh;
+    x.strokeText(l,W/2,y);x.fillText(l,W/2,y);
+  });
+  return grayToZ(softCopy(c,Math.max(1,Math.round(H*0.0025))));
+}
+
+/* hidden photo -> depth map of the main subject (closest big blob, holes filled, rounded relief) */
+function photoZ(W,H,cut){
+  const P=SG.photo,pw=P.W,ph=P.H,d=P.depth,n=pw*ph;
+  const hist=new Float64Array(256);
+  for(let i=0;i<n;i++)hist[d[i]]++;
+  let sum=0;for(let t=0;t<256;t++)sum+=t*hist[t];
+  let sB=0,wB=0,bestV=-1,thr=128;
+  for(let t=0;t<256;t++){
+    wB+=hist[t];if(!wB)continue;
+    const wF=n-wB;if(!wF)break;
+    sB+=t*hist[t];
+    const mB=sB/wB,mF=(sum-sB)/wF;
+    const v=wB*wF*(mB-mF)*(mB-mF);
+    if(v>bestV){bestV=v;thr=t;}
+  }
+  thr=Math.max(1,Math.min(254,thr+cut));
+  const mask=new Uint8Array(n);
+  for(let i=0;i<n;i++)mask[i]=d[i]>thr?1:0;
+  /* biggest connected blob */
+  const lab=new Int32Array(n),stack=new Int32Array(n);
+  let cur=0,best=0,bestArea=0;
+  for(let i=0;i<n;i++){
+    if(!mask[i]||lab[i])continue;
+    cur++;
+    let sp=0,area=0;
+    stack[sp++]=i;lab[i]=cur;
+    while(sp){
+      const p=stack[--sp];area++;
+      const x=p%pw,y=(p/pw)|0;
+      if(x>0&&mask[p-1]&&!lab[p-1]){lab[p-1]=cur;stack[sp++]=p-1;}
+      if(x<pw-1&&mask[p+1]&&!lab[p+1]){lab[p+1]=cur;stack[sp++]=p+1;}
+      if(y>0&&mask[p-pw]&&!lab[p-pw]){lab[p-pw]=cur;stack[sp++]=p-pw;}
+      if(y<ph-1&&mask[p+pw]&&!lab[p+pw]){lab[p+pw]=cur;stack[sp++]=p+pw;}
+    }
+    if(area>bestArea){bestArea=area;best=cur;}
+  }
+  const z=new Float32Array(W*H);
+  if(!best){toast('No clear subject found, try the Subject cutoff slider');return z;}
+  const m=new Uint8Array(n);
+  for(let i=0;i<n;i++)m[i]=lab[i]===best?1:0;
+  /* fill holes: anything not reachable from the border without crossing the subject */
+  const out2=new Uint8Array(n);
+  let sp=0;
+  const push=i=>{if(!m[i]&&!out2[i]){out2[i]=1;stack[sp++]=i;}};
+  for(let x=0;x<pw;x++){push(x);push((ph-1)*pw+x);}
+  for(let y=0;y<ph;y++){push(y*pw);push(y*pw+pw-1);}
+  while(sp){
+    const p=stack[--sp];
+    const x=p%pw,y=(p/pw)|0;
+    if(x>0)push(p-1);
+    if(x<pw-1)push(p+1);
+    if(y>0)push(p-pw);
+    if(y<ph-1)push(p+pw);
+  }
+  for(let i=0;i<n;i++)if(!out2[i])m[i]=1;
+  /* distance from the silhouette edge (chamfer) for a rounded look */
+  const dist=new Float32Array(n);
+  for(let i=0;i<n;i++)dist[i]=m[i]?1e6:0;
+  for(let y=0;y<ph;y++)for(let x=0;x<pw;x++){
+    const i=y*pw+x;if(!m[i])continue;
+    let v=dist[i];
+    if(x>0)v=Math.min(v,dist[i-1]+1);
+    if(y>0){v=Math.min(v,dist[i-pw]+1);
+      if(x>0)v=Math.min(v,dist[i-pw-1]+1.4);
+      if(x<pw-1)v=Math.min(v,dist[i-pw+1]+1.4);}
+    dist[i]=v;
+  }
+  let maxD=1,minX=pw,minY=ph,maxX=0,maxY=0,dmax=thr+1;
+  for(let y=ph-1;y>=0;y--)for(let x=pw-1;x>=0;x--){
+    const i=y*pw+x;if(!m[i])continue;
+    let v=dist[i];
+    if(x<pw-1)v=Math.min(v,dist[i+1]+1);
+    if(y<ph-1){v=Math.min(v,dist[i+pw]+1);
+      if(x<pw-1)v=Math.min(v,dist[i+pw+1]+1.4);
+      if(x>0)v=Math.min(v,dist[i+pw-1]+1.4);}
+    dist[i]=v;
+    if(v>maxD)maxD=v;
+    if(x<minX)minX=x;if(x>maxX)maxX=x;
+    if(y<minY)minY=y;if(y>maxY)maxY=y;
+    if(d[i]>dmax)dmax=d[i];
+  }
+  const span=Math.max(1,dmax-thr);
+  const gc=document.createElement('canvas');gc.width=pw;gc.height=ph;
+  const gx=gc.getContext('2d');
+  const gi=gx.createImageData(pw,ph),gd=gi.data;
+  for(let i=0;i<n;i++){
+    gd[i*4+3]=255;
+    if(m[i]){
+      const nd=Math.max(0,Math.min(1,(d[i]-thr)/span));
+      const e=Math.sqrt(Math.min(1,dist[i]/(maxD*0.45)));
+      const v=Math.round(255*(0.4+0.6*(0.45*nd+0.55*e)));
+      gd[i*4]=v;gd[i*4+1]=v;gd[i*4+2]=v;
+    }
+  }
+  gx.putImageData(gi,0,0);
+  const bw=maxX-minX+1,bh=maxY-minY+1;
+  const sc=Math.min(W*0.84/bw,H*0.84/bh);
+  const dw=bw*sc,dh=bh*sc;
+  const oc=document.createElement('canvas');oc.width=W;oc.height=H;
+  const ox=oc.getContext('2d');
+  ox.fillStyle='#000';ox.fillRect(0,0,W,H);
+  try{ox.filter='blur('+Math.max(1,Math.round(H*0.003))+'px)';}catch(e){}
+  ox.imageSmoothingQuality='high';
+  ox.drawImage(gc,minX,minY,bw,bh,(W-dw)/2,(H-dh)/2,dw,dh);
+  return grayToZ(oc);
+}
+
+function getZ(W,H){
+  const cut=+$('sgcut').value;
+  const key=[SG.mode,SG.mode==='text'?SG.text:SG.photoId+':'+cut,W,H,V.parallel].join('|');
+  if(SG.zc&&SG.zc.key===key)return SG.zc.z;
+  const z=SG.mode==='text'?textZ(W,H):photoZ(W,H,cut);
+  /* cross-eye viewing flips depth, so flip the map to keep the shape raised */
+  if(!V.parallel){for(let i=0;i<z.length;i++)z[i]=1-z[i];}
+  SG.zc={key:key,z:z};
+  return z;
+}
+
+/* palette lookup table: many random bright/dark colours */
+function getLut(i){
+  if(SG.luts[i])return SG.luts[i];
+  const base=PALS[i].c,N=1024,a=new Uint32Array(N);
+  for(let k=0;k<N;k++){
+    const c=base[(Math.random()*base.length)|0];
+    const b=0.45+Math.random()*0.55;
+    a[k]=((255<<24)|(((c[2]*b)|0)<<16)|(((c[1]*b)|0)<<8)|((c[0]*b)|0))>>>0;
+  }
+  SG.luts[i]=a;
+  return a;
+}
+/* random dot field, kept the same while you move sliders so changes are comparable */
+function getNoise(W,H,ds){
+  const key=W+'x'+H+'x'+ds;
+  if(SG.noise&&SG.noiseKey===key)return SG.noise;
+  const wn=Math.ceil(W/ds),hn=Math.ceil(H/ds)+1;
+  const a=new Uint16Array(wn*hn);
+  for(let i=0;i<a.length;i++)a[i]=(Math.random()*1024)|0;
+  SG.noise=a;SG.noiseKey=key;
+  return a;
+}
+
+/* the SIRDS core: z is Float32Array W*H (0 far .. 1 near) */
+function sgCore(z,W,H,mu,E,lut,noise,ds){
+  const Wn=Math.ceil(W/ds);
+  const img=new Uint32Array(W*H);
+  const N=lut.length;
+  const same=new Int32Array(W),pix=new Uint32Array(W);
+  const muE=mu*E;
+  for(let y=0;y<H;y++){
+    const row=y*W;
+    for(let x=0;x<W;x++)same[x]=x;
+    for(let x=0;x<W;x++){
+      const zv=z[row+x];
+      const s=Math.round((1-mu*zv)*E/(2-mu*zv));
+      let left=x-((s+(s&y&1))>>1),right=left+s;
+      if(left>=0&&right<W){
+        let t=1,vis=true,zt;
+        do{
+          zt=zv+2*(2-mu*zv)*t/muE;
+          const xl=x-t,xr=x+t;
+          if(xl<0||xr>=W)break;
+          vis=z[row+xl]<zt&&z[row+xr]<zt;
+          t++;
+        }while(vis&&zt<1);
+        if(vis){
+          let k=same[left];
+          while(k!==left&&k!==right){
+            if(k<right)left=k;
+            else{left=right;right=k;}
+            k=same[left];
+          }
+          same[left]=right;
+        }
+      }
+    }
+    const nrow=Math.floor(y/ds)*Wn;
+    for(let x=W-1;x>=0;x--){
+      if(same[x]===x)pix[x]=lut[noise[nrow+((x/ds)|0)]%N];
+      else pix[x]=pix[same[x]];
+      img[row+x]=pix[x];
+    }
+  }
+  return img;
+}
+
+function renderSG(){
+  const W=SGW,H=SGH;
+  const mu=+$('sgdep').value/100;
+  const E=Math.round(W*(+$('sgper').value/100));
+  const ds=+$('sgdot').value;
+  const z=getZ(W,H);
+  out.width=W;out.height=H;
+  const ctx=out.getContext('2d');
+  const img=ctx.createImageData(W,H);
+  const u32=new Uint32Array(img.data.buffer);
+  u32.set(sgCore(z,W,H,mu,E,getLut(SG.pal),getNoise(W,H,ds),ds));
+  ctx.putImageData(img,0,0);
+  /* two guide dots, spaced exactly like the background repeat */
+  const zb=V.parallel?0:1;
+  const s0=Math.round((1-mu*zb)*E/(2-mu*zb));
+  const m=dotMetrics(H);
+  dotAt(ctx,W/2-s0/2,m.y,m.r);
+  dotAt(ctx,W/2+s0/2,m.y,m.r);
 }
 
 loadLib().then(startCam);
